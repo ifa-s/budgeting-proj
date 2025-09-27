@@ -29,7 +29,7 @@ class UserClient:
         # Resolve system prompts (fallback to files if not provided)
         project_dir = Path(__file__).resolve().parents[1]
         frontend_path = project_dir / "promptfrontend.txt"
-        backend_path = project_dir / "promptbackend.txt"
+        backend_path = project_dir / "promptbackend_clean.txt"
 
         if frontend_system_prompt is None:
             if frontend_path.exists():
