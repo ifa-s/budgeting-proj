@@ -20,6 +20,7 @@ def get_detailed_bucket_data(bucket_manager):
     try:
         bucket_names = bucket_manager.get_bucket_names()
         bucket_data = []
+        total_budget = bucket_manager.get_total_budget()
         print(f"[DEBUG] get_detailed_bucket_data - Raw bucket names: {bucket_names}")
         
         for name in bucket_names:
@@ -29,17 +30,17 @@ def get_detailed_bucket_data(bucket_manager):
                 if name == "free" and bucket.get_percentage() >= 99.0 and len(bucket_names) > 1:
                     continue
                     
+                current_amount = total_budget * (bucket.get_percentage() / 100.0)
                 bucket_info = {
                     'name': name,
-                    'current': bucket.get_current_value(),
-                    'max': bucket_manager.get_total_budget() * (bucket.get_percentage() / 100.0),
+                    'current': current_amount,
+                    'max': total_budget * (bucket.get_percentage() / 100.0),
                     'percentage': bucket.get_percentage()
                 }
                 bucket_data.append(bucket_info)
                 print(f"[DEBUG] Added bucket to chart data: {bucket_info}")
         
         # Get actual total budget and percentage
-        total_budget = bucket_manager.get_total_budget()
         total_percentage = bucket_manager.get_total_percentage()
         
         # Debug info
