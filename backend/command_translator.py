@@ -174,10 +174,6 @@ class CommandTranslator:
                     return f"✅ Subtracted ${amount:.2f} from bucket '{name}'"
                 else:
                     return f"❌ Failed to subtract amount from bucket '{name}' - bucket doesn't exist"
-                    
-            elif cmd_type == 'REBALANCE':
-                self.bucket_manager.rebalance_buckets()
-                return "✅ Rebalanced all buckets to match percentage allocations"
                 
             elif cmd_type == 'AUTO_RESIZE_TO_100':
                 success = self.bucket_manager.auto_resize_to_100_percent()

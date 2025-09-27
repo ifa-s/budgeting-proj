@@ -285,34 +285,44 @@ class BucketManager:
         """
         return sum((bucket.get_percentage() / 100.0) * self.total_budget for bucket in self.buckets.values())
     
-    def rebalance_buckets(self) -> None:
-        """
-        Rebalance all buckets to match their percentage allocations based on total budget.
-        This will reset all current values to match the percentage * total_budget.
-        """
-        self._update_bucket_values()
-    
     def auto_resize_to_100_percent(self) -> bool:
         """
-        Automatically resize all buckets proportionally to make total percentage equal 100%.
+        Automatically resize all buckets proportionally to make total percentage equal 100%,
+        but do not change the percentage of the bucket named 'rent'.
         
         Returns:
             bool: True if successful, False if no buckets exist
         """
         if not self.buckets:
             return False
-        
-        current_total = self.get_total_percentage()
-        if current_total == 0:
+
+        # Separate 'rent' bucket from others
+        rent_bucket = self.buckets.get("rent")
+        other_buckets = [b for name, b in self.buckets.items() if name != "rent"]
+
+        # If all buckets are 'rent', nothing to do
+        if not other_buckets and rent_bucket:
+            return True
+
+        # Compute total percentage for non-rent buckets
+        rent_pct = rent_bucket.get_percentage() if rent_bucket else 0.0
+        other_total = sum(b.get_percentage() for b in other_buckets)
+
+        if other_total == 0:
+            # If only rent has a percentage, set it to 100%
+            if rent_bucket:
+                rent_bucket.resize_percentage(100.0)
+                return True
             return False
-        
-        scaling_factor = 100.0 / current_total
-        
-        for bucket in self.buckets.values():
+
+        # Scale only non-rent buckets to fill (100 - rent_pct)
+        scaling_factor = (100.0 - rent_pct) / other_total
+
+        for bucket in other_buckets:
             new_percentage = bucket.get_percentage() * scaling_factor
             bucket.resize_percentage(new_percentage)
-        
-        # No-op when not tracking per-bucket dollar amounts
+
+        # Leave rent bucket unchanged
         return True
     
     def __str__(self) -> str:

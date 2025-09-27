@@ -9,7 +9,6 @@ Allowed commands (one per line):
 - RESIZE_BUCKET <name> <new_percentage>
 - ADD_AMOUNT <name> <amount>
 - SUBTRACT_AMOUNT <name> <amount>
-- REBALANCE
 - AUTO_RESIZE_TO_100
 
 Normalization and rules:
@@ -22,7 +21,6 @@ Normalization and rules:
 - When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
  - Do not emit commands for the implicit "free" bucket unless required to make an operation possible. Important: when you resize other buckets downward, the "free" bucket does NOT auto-increase; use `RESIZE_BUCKET free <new_percentage>` to claim slack before `ADD_BUCKET` if needed.
 - PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
-- "rebalance" => REBALANCE (set dollar amounts to match current percentages).
 - "make totals/percentages equal 100" => AUTO_RESIZE_TO_100.
 - "put/add/deposit $X to NAME" => ADD_AMOUNT name X.
 - "spend/withdraw/take $X from NAME" => SUBTRACT_AMOUNT name X.
@@ -52,7 +50,7 @@ Your job: Decide if actions are required based on USER_REQUEST (LLM_RESPONSE may
 
 Non-commitment and options:
 - If LLM_RESPONSE presents options, asks a question, or proposes alternatives without explicit confirmation to proceed, do not make any changes. Return exactly NO_ACTION.
-- Only execute changes when USER_REQUEST explicitly requests an action (e.g., set/add/remove/move/rebalance) or clearly confirms a specific option.
+- Only execute changes when USER_REQUEST explicitly requests an action (e.g., set/add/remove/move) or clearly confirms a specific option.
 
 Examples (each includes a trailing CURRENT_STATUS snapshot):
 
@@ -109,8 +107,8 @@ OUTPUT:
 RESIZE_BUCKET transportation 5.00
 RESIZE_BUCKET savings 25.00
 
-USER_REQUEST: Make the percentages add up to 100 and rebalance.
-LLM_RESPONSE: I'll normalize allocations to 100% and rebalance funds.
+USER_REQUEST: Make the percentages add up to 100.
+LLM_RESPONSE: I'll normalize allocations to 100%
 CURRENT_STATUS:
 ============================================================
 CURRENT BUCKET MANAGER STATUS
@@ -125,7 +123,6 @@ Percentage valid: False
 ============================================================
 OUTPUT:
 AUTO_RESIZE_TO_100
-REBALANCE
 
 USER_REQUEST: My monthly income is $2600 and rent is $1200. Set rent accordingly.
 LLM_RESPONSE: Rent should be 46.15% of income; I'll set it and the budget.
