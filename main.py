@@ -19,11 +19,11 @@ def main() -> int:
         return 1
 
     # Load system prompt from prompt.txt if present
-    prompt_path = Path(__file__).resolve().parent / "prompt.txt"
+    prompt_path = Path(__file__).resolve().parent / "promptfrontend.txt"
     try:
         system_prompt = prompt_path.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
-        system_prompt = "You are a helpful assistant."
+        system_prompt = "You are an expert financial advisor for a generation Z adult."
 
     print("Type your prompt and press Enter. Empty line to quit.\n")
     while True:
