@@ -52,3 +52,24 @@ deactivate
 - Always activate your virtual environment before working on the project
 - The virtual environment folder (`venv/`) should be added to `.gitignore`
 - Use `pip freeze > requirements.txt` to save your project dependencies
+
+
+## Backend structure
+We want to manage various dynamic-sized buckets to add up to 100, and to complain when they don't add up
+Classes:
+BucketManager (uses underlaying array/dict/? to manage various buckets, and ensure they add properly)
+Bucket (current money, max money, sizing (percent or dollar), etc)
+SQLite to store buckets probably
+AIManager -- Talks to OpenRouter, provides correct context, runs command when needed etc 
+
+Figure out django stuff -- uhh it's been a minute but lowkey not my problem
+Make API for the backend? Essentially translate bucketmanager aspects into easy commands for the ai, with output sent back to it
+A
+
+Task Assignment (unfinished)
+- BucketManager
+- Bucket llm
+- SQLite & Database work (15 minute low prio q)
+- AIManager
+- API
+- Django frontend - yash n wizkid
