@@ -638,3 +638,49 @@ Percentage valid: True
 Backend Response:
 RESIZE_BUCKET savings 25.00
 ADD_BUCKET giving 5.00
+
+[2025-09-27T22:41:50.392302 UTC]
+-- Enhanced User Message--
+1200 400 conservative
+
+CURRENT CHART STATE: No budget buckets have been created yet. The chart shows 100% unallocated.
+Frontend Response:
+Thanks! I have your monthly take-home income as $1200, your rent as $400, and your savings goal as conservative.
+
+Here is a proposed balanced starter budget for you:
+
+**Planned changes:**
+*   Add rent at 33.33%
+*   Add savings at 15%
+*   Add needs at 30%
+*   Add wants at 15%
+*   Add emergency_fund at 7.67%
+
+**Suggestions:**
+*   **Rent:** At $400, this is 33.33% of your income, which aligns with general recommendations.
+*   **Needs:** This bucket covers your essential bills like utilities, groceries, transportation, and insurance. For now, we've allocated $360 for this.
+*   **Savings:** With a conservative savings goal, this 15% ($180) is set aside for long-term goals, investments, or retirement accounts.
+*   **Wants:** This is your discretionary spending for things like dining out, entertainment, hobbies, and subscriptions. You have $180 per month for this.
+*   **Emergency Fund:** Building an emergency fund is key! We've set aside $92.04 for this to start. The goal is to have 3-6 months of living expenses saved.
+
+How does this initial breakdown look to you? We can adjust any of these percentages to better fit your lifestyle!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$1200.00, total_percentage=93.33%):
+  Bucket(name='rent', percentage=33.33%)
+  Bucket(name='savings', percentage=15.00%)
+  Bucket(name='needs', percentage=30.00%)
+  Bucket(name='wants', percentage=15.00%
+  Bucket(name='emergency_fund', percentage=6.67%))
+Total percentage: 100%
+Percentage valid: True
+============================================================
+Backend Response:
+SET_TOTAL_BUDGET 1200
+ADD_BUCKET rent 33.33
+ADD_BUCKET savings 15.00
+ADD_BUCKET needs 30.00
+ADD_BUCKET wants 15.00
+ADD_BUCKET emergency_fund 6.67
