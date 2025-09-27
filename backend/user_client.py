@@ -1,30 +1,17 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from backend.AIM import OpenRouterClient
-from command_translator import CommandTranslator
+from backend.command_translator import CommandTranslator
 
 
 class UserClient:
     """High-level session manager for the budgeting app.
 
-    Encapsulates:
-    - Frontend LLM client (financial advisor persona)
-    - Backend LLM client (command planner persona)
-    - Conversation state for the frontend
-    - Command translation and a shared BucketManager
-
-    Typical usage:
-
-        client = UserClient()
-        first_reply = client.start_conversation()
-        out = client.process_user_input("I make $4,000/mo and want to save more")
-        print(out["frontend"])     # Advisor response
-        print(out["backend"])      # Planned commands
-        print(out["commands"])     # Execution results against BucketManager
-        print(client.get_status())  # Current bucket status
+    Encapsulates frontend/backend LLM clients, conversation state, and a BucketManager
+    accessed via CommandTranslator.
     """
 
     def __init__(
@@ -40,20 +27,21 @@ class UserClient:
         self.backend: OpenRouterClient = OpenRouterClient()
 
         # Resolve system prompts (fallback to files if not provided)
-        project_dir = Path(__file__).resolve().parent
+        project_dir = Path(__file__).resolve().parents[1]
+        frontend_path = project_dir / "promptfrontend.txt"
+        backend_path = project_dir / "promptbackend.txt"
+
         if frontend_system_prompt is None:
-            frontend_prompt_path = project_dir / "promptfrontend.txt"
-            if frontend_prompt_path.exists():
-                frontend_system_prompt = frontend_prompt_path.read_text(encoding="utf-8").strip()
+            if frontend_path.exists():
+                frontend_system_prompt = frontend_path.read_text(encoding="utf-8").strip()
             else:
                 frontend_system_prompt = (
                     "You are an expert financial advisor for a generation Z adult."
                 )
 
         if backend_system_prompt is None:
-            backend_prompt_path = project_dir / "promptbackend.txt"
-            if backend_prompt_path.exists():
-                backend_system_prompt = backend_prompt_path.read_text(encoding="utf-8").strip()
+            if backend_path.exists():
+                backend_system_prompt = backend_path.read_text(encoding="utf-8").strip()
             else:
                 backend_system_prompt = (
                     "You are the backend command planner for a budgeting app."
@@ -75,9 +63,7 @@ class UserClient:
         self.command_translator: CommandTranslator = CommandTranslator()
         self.bucket_manager = self.command_translator.bucket_manager
 
-    # ---- Conversation control -------------------------------------------------
     def start_conversation(self) -> str:
-        """Prime the frontend and return its initial message."""
         reply = self.frontend.chat(
             messages=self.frontend_messages,
             model=self.frontend_model,
@@ -86,14 +72,6 @@ class UserClient:
         return reply
 
     def process_user_input(self, user_text: str) -> Dict[str, str]:
-        """Send `user_text` to the frontend, then plan via backend and execute.
-
-        Returns a dict containing:
-        - "frontend": the advisor response
-        - "backend": the planned command string(s)
-        - "commands": execution results from the CommandTranslator
-        """
-        # Frontend turn
         self.frontend_messages.append({"role": "user", "content": user_text})
         frontend_reply = self.frontend.chat(
             messages=self.frontend_messages,
@@ -101,7 +79,6 @@ class UserClient:
         )
         self.frontend_messages.append({"role": "assistant", "content": frontend_reply})
 
-        # Backend plan (conditioned on both the user text and the advisor reply)
         backend_messages: List[Dict[str, Any]] = [
             {"role": "system", "content": self.backend_system_prompt},
             {
@@ -114,7 +91,6 @@ class UserClient:
             model=self.backend_model,
         )
 
-        # Execute planned commands, if any
         command_results = self.command_translator(backend_reply) if backend_reply else ""
 
         return {
@@ -123,13 +99,10 @@ class UserClient:
             "commands": command_results,
         }
 
-    # ---- Status helpers -------------------------------------------------------
     def get_status(self) -> str:
-        """Return a formatted status string for the current BucketManager."""
         return self.command_translator.get_status()
 
     def get_bucket_manager_summary(self) -> str:
-        """Return a concise single-line summary of bucket state."""
         total_pct = self.bucket_manager.get_total_percentage()
         total_budget = self.bucket_manager.get_total_budget()
         bucket_names = ", ".join(sorted(self.bucket_manager.get_bucket_names()))

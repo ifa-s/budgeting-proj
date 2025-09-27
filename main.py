@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
-from user_client import UserClient
+from backend.user_client import UserClient
 
 
 def main() -> int:

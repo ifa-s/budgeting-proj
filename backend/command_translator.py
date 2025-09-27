@@ -16,17 +16,9 @@ looking at the first word in each line as the command, e.g.:
 and executes them using the actual BucketManager methods.
 """
 
-import sys
 from typing import List, Optional, Tuple
-from pathlib import Path
 
-# Add the backend directory to the path so we can import BucketManager
-sys.path.append(str(Path(__file__).parent / "backend"))
-
-try:
-    from backend.buckets.bucketmanager import BucketManager
-except ImportError as e:
-    raise ImportError(f"Error importing BucketManager: {e}. Make sure the backend/buckets directory exists and contains bucketmanager.py")
+from backend.buckets.bucketmanager import BucketManager
 
 
 class CommandTranslator:
@@ -171,3 +163,4 @@ class CommandTranslator:
         except Exception as e:
             return f"❌ Error executing command: {e}"
     
+
