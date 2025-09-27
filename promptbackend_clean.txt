@@ -17,6 +17,7 @@ Normalization and rules:
 - Percentages: 0–100 formatted with EXACTLY two decimals (e.g., 12.50). Round to nearest 0.01.
 - Bucket names: lowercase; use underscores instead of spaces; strip surrounding punctuation.
 - CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
+- CRITICAL (high priority): When multiple commands are needed, ALWAYS batch subtraction and resizing downwards FIRST. 
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
 - When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
  - Do not emit commands for the implicit "free" bucket unless required to make an operation possible. Important: when you resize other buckets downward, the "free" bucket does NOT auto-increase; use `RESIZE_BUCKET free <new_percentage>` to claim slack before `ADD_BUCKET` if needed.
@@ -154,3 +155,392 @@ Percentage valid: True
 ============================================================
 OUTPUT:
 ADD_BUCKET utilities 15.00
+
+User Message: I want to add 35$ to my savings, taking it away from my wants
+Frontend Response: Got it. You want to add $35 to your savings and take it from your wants.
+
+Using your saved profile (income $2500, rent $1000, savings: moderate).
+
+**Planned Changes:**
+
+*   Add $35.00 to savings
+*   Subtract $35.00 from wants
+
+**Current Buckets (After Change):**
+
+*   rent: 40.0% ($1000.00)
+*   savings: 41.4% ($535.00)
+*   needs: 10.0% ($250.00)
+*   wants: 13.6% ($40.00)
+*   emergency_fund: 15.0% ($375.00)
+
+**Suggestions:**
+
+*   **Monitor Your "Wants":** With $40 left in your "wants" category after this adjustment, make sure this is still a realistic amount for your discretionary spending. If you find yourself consistently overspending here, we can explore adjusting other buckets.
+*   **Revisit "Needs":** If your "needs" (groceries, utilities, etc.) are consistently higher than $250, we may need to slightly reduce your "wants" or "emergency_fund" to accommodate them.
+OUTPUT:
+SUBTRACT_AMOUNT wants 35.00
+ADD_AMOUNT savings 35.00
+
+[2025-09-27T17:54:49.800314 UTC]
+-- Enhanced User Message--
+2500 1000 moderate
+
+CURRENT CHART STATE: Your budget is visualized with 1 buckets. Total budget: $0.00, Total allocated: 100.0%. Buckets: free (100.0%)
+Frontend Response:
+Thanks! I have your monthly take-home income as $2500, your monthly rent as $1000, and you'd like to save "moderately."
+
+Here's a balanced starter budget to get you organized:
+
+**Planned Changes:**
+*   Set total budget to $2500
+*   Add rent at 40% ($1000)
+*   Add savings at 20% ($500)
+*   Add groceries at 15% ($375)
+*   Add transportation at 10% ($250)
+*   Add dining out at 5% ($125)
+*   Add entertainment at 5% ($125)
+*   Add miscellaneous at 5% ($125)
+
+**Suggestions:**
+
+*   **Emergency Fund:** Since you're saving moderately, it's a good idea to prioritize building an emergency fund within your savings bucket. Aim for 3-6 months of living expenses.
+*   **Sinking Funds:** Consider allocating portions of your savings or miscellaneous buckets to specific "sinking funds" for larger, anticipated expenses like annual insurance premiums, holiday gifts, or future down payments.
+*   **Track Spending:** For the first month, try to track your spending in groceries, dining out, entertainment, and miscellaneous to see if these percentages align with your actual habits. We can adjust them as needed!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$2500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=40.00%)
+  Bucket(name='savings', percentage=20.00%)
+  Bucket(name='groceries', percentage=15.00%)
+  Bucket(name='transportation', percentage=10.00%)
+  Bucket(name='dining_out', percentage=5.00%)
+  Bucket(name='entertainment', percentage=5.00%)
+  Bucket(name='miscellaneous', percentage=5.00%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SET_TOTAL_BUDGET 2500
+ADD_BUCKET rent 40.00
+ADD_BUCKET savings 20.00
+ADD_BUCKET groceries 15.00
+ADD_BUCKET transportation 10.00
+ADD_BUCKET dining_out 5.00
+ADD_BUCKET entertainment 5.00
+ADD_BUCKET miscellaneous 5.00
+
+[2025-09-27T17:56:50.875775 UTC]
+-- Enhanced User Message--
+3200 1400 conservative
+
+CURRENT CHART STATE: Your budget is visualized with 1 buckets. Total budget: $0.00, Total allocated: 100.0%. Buckets: free (100.0%)
+Frontend Response:
+Ok, I have your monthly take-home income as $3200 and your rent at $1400. You're looking to save conservatively.
+
+Here's a balanced starter budget for you:
+
+**Planned Changes:**
+*   **Remove:** free (100%)
+*   **Add:** rent at 43.2% ($1400)
+*   **Add:** savings at 15% ($480)
+*   **Add:** essentials (groceries, utilities, transportation, etc.) at 25% ($800)
+*   **Add:** fun/discretionary spending (dining out, hobbies, entertainment) at 10% ($320)
+*   **Add:** personal care/health at 5% ($160)
+*   **Add:** miscellaneous/buffer at 1.8% ($57.60)
+
+**Suggestions:**
+*   This budget allocates a significant portion to rent (43.2%), which is a bit higher than the typical recommendation of 30-35%. We can explore ways to potentially reduce this percentage in the future, perhaps by looking for cheaper housing options or increasing your income.
+*   With a conservative savings goal, 15% might feel comfortable. If you ever want to accelerate your savings, we can look at increasing this percentage by trimming other categories.
+*   The 'essentials' category is broad. You might want to break this down further into groceries, utilities, transportation, etc., so you can see exactly where that large chunk of money is going.
+*   Don't forget to build an emergency fund! Even with conservative savings, having 3-6 months of living expenses saved in an easily accessible account is crucial for unexpected events.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3200.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=1.80%)
+  Bucket(name='rent', percentage=43.20%)
+  Bucket(name='savings', percentage=15.00%)
+  Bucket(name='essentials', percentage=25.00%)
+  Bucket(name='fun_discretionary_spending', percentage=10.00%)
+  Bucket(name='personal_care_health', percentage=5.00%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SET_TOTAL_BUDGET 3200
+REMOVE_BUCKET free
+ADD_BUCKET rent 43.20
+ADD_BUCKET savings 15.00
+ADD_BUCKET essentials 25.00
+ADD_BUCKET fun_discretionary_spending 10.00
+ADD_BUCKET personal_care_health 5.00
+ADD_BUCKET miscellaneous_buffer 1.80
+
+[2025-09-27T17:57:05.245629 UTC]
+-- Enhanced User Message--
+3500 1200 conservative
+
+CURRENT CHART STATE: Your budget is visualized with 1 buckets. Total budget: $0.00, Total allocated: 100.0%. Buckets: free (100.0%)
+Frontend Response:
+Thanks! I have your monthly income as $3500, rent as $1200, and a conservative savings goal.
+
+Here's a balanced starter budget for you:
+
+**Planned Changes:**
+
+*   **Set Total Budget:** $3500
+*   **Add Bucket:** Rent at $1200 (34.3%)
+*   **Add Bucket:** Savings at $350 (10.0%)
+*   **Add Bucket:** Groceries at $420 (12.0%)
+*   **Add Bucket:** Utilities at $210 (6.0%)
+*   **Add Bucket:** Transportation at $210 (6.0%)
+*   **Add Bucket:** Personal Care at $175 (5.0%)
+*   **Add Bucket:** Dining Out at $245 (7.0%)
+*   **Add Bucket:** Entertainment at $350 (10.0%)
+*   **Add Bucket:** Miscellaneous at $330 (9.7%)
+
+**Suggestions:**
+
+*   **Emergency Fund:** While you're saving, consider earmarking a portion of your savings specifically for an emergency fund. This is crucial for unexpected expenses.
+*   **Tracking:** The best way to see if this plan works is to track your spending for a month. Many apps can help with this.
+*   **Flexibility:** This is a starting point. We can adjust these percentages as you get a better feel for where your money is actually going.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=34.29%)
+  Bucket(name='savings', percentage=10.00%)
+  Bucket(name='groceries', percentage=12.00%)
+  Bucket(name='utilities', percentage=6.00%)
+  Bucket(name='transportation', percentage=6.00%)
+  Bucket(name='personal_care', percentage=5.00%)
+  Bucket(name='dining_out', percentage=7.00%)
+  Bucket(name='entertainment', percentage=10.00%)
+  Bucket(name='miscellaneous', percentage=9.71%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SET_TOTAL_BUDGET 3500
+ADD_BUCKET rent 34.29
+ADD_BUCKET savings 10.00
+ADD_BUCKET groceries 12.00
+ADD_BUCKET utilities 6.00
+ADD_BUCKET transportation 6.00
+ADD_BUCKET personal_care 5.00
+ADD_BUCKET dining_out 7.00
+ADD_BUCKET entertainment 10.00
+ADD_BUCKET miscellaneous 9.71
+
+[2025-09-27T17:57:38.418067 UTC]
+-- Enhanced User Message--
+I want to add 32$ to savings from my groceries
+
+CURRENT CHART STATE: Your budget is visualized with 10 buckets. Total budget: $3500.00, Total allocated: 100.0%. Buckets: free (0.0%), rent (34.3%), savings (10.0%), groceries (12.0%), utilities (6.0%), transportation (6.0%), personal_care (5.0%), dining_out (7.0%), entertainment (10.0%), miscellaneous (9.7%)
+Frontend Response:
+Understood. I'll adjust your budget accordingly.
+
+**Planned Changes:**
+
+*   **Add to Savings:** Add $32 (0.9%)
+*   **Subtract from Groceries:** Subtract $32 (0.9%)
+
+This will bring your savings to $382 (10.9%) and reduce your groceries budget to $388 (11.1%), while keeping your total budget at $3500.
+
+**Suggestions:**
+
+*   **Review Groceries:** Since we've reduced your grocery allocation, pay close attention to your grocery spending this month. If you find yourself consistently over budget, we may need to re-evaluate this category or see if other buckets can be slightly adjusted.
+*   **Small Adjustments:** Making these small, targeted adjustments is a great way to fine-tune your budget without drastic changes.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=34.29%)
+  Bucket(name='savings', percentage=10.91%)
+  Bucket(name='groceries', percentage=11.09%)
+  Bucket(name='utilities', percentage=6.00%)
+  Bucket(name='transportation', percentage=6.00%)
+  Bucket(name='personal_care', percentage=5.00%)
+  Bucket(name='dining_out', percentage=7.00%)
+  Bucket(name='entertainment', percentage=10.00%)
+  Bucket(name='miscellaneous', percentage=9.71%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SUBTRACT_AMOUNT groceries 32.00
+ADD_AMOUNT savings 32.00
+
+[2025-09-27T17:57:38.418067 UTC]
+-- Enhanced User Message--
+I want to add 32$ to savings from my groceries
+
+CURRENT CHART STATE: Your budget is visualized with 10 buckets. Total budget: $3500.00, Total allocated: 100.0%. Buckets: free (0.0%), rent (34.3%), savings (10.0%), groceries (12.0%), utilities (6.0%), transportation (6.0%), personal_care (5.0%), dining_out (7.0%), entertainment (10.0%), miscellaneous (9.7%)
+Frontend Response:
+Understood. I'll adjust your budget accordingly.
+
+**Planned Changes:**
+
+*   **Add to Savings:** Add $32 (0.9%)
+*   **Subtract from Groceries:** Subtract $32 (0.9%)
+
+This will bring your savings to $382 (10.9%) and reduce your groceries budget to $388 (11.1%), while keeping your total budget at $3500.
+
+**Suggestions:**
+
+*   **Review Groceries:** Since we've reduced your grocery allocation, pay close attention to your grocery spending this month. If you find yourself consistently over budget, we may need to re-evaluate this category or see if other buckets can be slightly adjusted.
+*   **Small Adjustments:** Making these small, targeted adjustments is a great way to fine-tune your budget without drastic changes.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=34.29%)
+  Bucket(name='savings', percentage=10.91%)
+  Bucket(name='groceries', percentage=11.09%)
+  Bucket(name='utilities', percentage=6.00%)
+  Bucket(name='transportation', percentage=6.00%)
+  Bucket(name='personal_care', percentage=5.00%)
+  Bucket(name='dining_out', percentage=7.00%)
+  Bucket(name='entertainment', percentage=10.00%)
+  Bucket(name='miscellaneous', percentage=9.71%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SUBTRACT_AMOUNT groceries 32.00
+ADD_AMOUNT savings 32.00
+
+[2025-09-27T17:58:14.782030 UTC]
+-- Enhanced User Message--
+Wipe out my transportation budget and add it to personal care
+
+CURRENT CHART STATE: Your budget is visualized with 10 buckets. Total budget: $3500.00, Total allocated: 100.0%. Buckets: free (0.0%), rent (34.3%), savings (10.9%), groceries (11.1%), utilities (6.0%), transportation (6.0%), personal_care (5.0%), dining_out (7.0%), entertainment (10.0%), miscellaneous (9.7%)
+Frontend Response:
+Understood. I'll adjust your budget by removing the transportation category and reallocating it to personal care.
+
+**Planned Changes:**
+
+*   **Remove Bucket:** Transportation (6.0%)
+*   **Add to Personal Care:** Add $210 (6.0%)
+
+This will remove transportation from your budget and increase your personal care allocation to $385 (11.0%).
+
+**Suggestions:**
+
+*   **Transportation Alternatives:** Since you've eliminated your dedicated transportation budget, think about how you'll cover any upcoming travel costs. This might involve using your increased personal care budget or dipping into your miscellaneous or entertainment funds as needed.
+*   **Re-evaluate Personal Care:** With a larger allocation to personal care, you might consider what new items or services you could invest in.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=6.00%)
+  Bucket(name='rent', percentage=34.29%)
+  Bucket(name='savings', percentage=10.91%)
+  Bucket(name='groceries', percentage=11.09%)
+  Bucket(name='utilities', percentage=6.00%)
+  Bucket(name='personal_care', percentage=5.00%)
+  Bucket(name='dining_out', percentage=7.00%)
+  Bucket(name='entertainment', percentage=10.00%)
+  Bucket(name='miscellaneous', percentage=9.71%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+REMOVE_BUCKET transportation
+RESIZE_BUCKET personal_care 11.00
+
+-- Enhanced User Message--
+3000 1000 aggressive
+
+CURRENT CHART STATE: Your budget is visualized with 1 buckets. Total budget: $0.00, Total allocated: 100.0%. Buckets: free (100.0%)
+Frontend Response:
+Thanks! I have your monthly income as $3000, your rent as $1000, and your savings goal as aggressive.
+
+Here is a proposed balanced starter budget for you:
+
+**Planned changes:**
+*   Add rent at 33.33%
+*   Add savings at 31%
+*   Add needs at 20%
+*   Add wants at 10%
+*   Add emergency_fund at 5.67%
+
+**Suggestions:**
+*   **Needs:** This bucket typically covers essential bills like utilities, groceries, transportation, and insurance. You might break this down further into sub-categories once you see how it fits your spending.
+*   **Wants:** This is for discretionary spending like dining out, entertainment, hobbies, and subscriptions. You can adjust this percentage based on your lifestyle.
+*   **Emergency Fund:** Aim to build this up to 3-6 months of living expenses. For now, 5.67% is a great start towards that goal.
+*   **Savings:** With an aggressive goal, this large percentage is dedicated to investments, retirement accounts (like a Roth IRA), or other long-term financial goals.
+
+How does this initial breakdown look to you? We can tweak any of these percentages as needed!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=33.33%)
+  Bucket(name='savings', percentage=31.00%)
+  Bucket(name='needs', percentage=20.00%)
+  Bucket(name='wants', percentage=10.00%)
+  Bucket(name='emergency_fund', percentage=5.67%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SET_TOTAL_BUDGET 3000
+ADD_BUCKET rent 33.33
+ADD_BUCKET savings 31.00
+ADD_BUCKET needs 20.00
+ADD_BUCKET wants 10.00
+ADD_BUCKET emergency_fund 5.67
+
+-- Enhanced User Message--
+I think I want more money in that. Take that out of my "wants" please. Add 50 more the emergency fund
+
+CURRENT CHART STATE: Your budget is visualized with 6 buckets. Total budget: $6500.00, Total allocated: 100.0%. Buckets: free (0.0%), rent (38.5%), savings (30.0%), needs (20.0%), wants (10.0%), emergency_fund (1.5%)
+Frontend Response:
+Okay, I can definitely help with that. We'll shift funds from your "wants" bucket to increase your emergency fund.
+
+**To add $50 to your emergency fund, we need to figure out what percentage that is of your total income and then reduce your "wants" by that same percentage.**
+
+$50 / $6500 = 0.00769, which is approximately 0.77%.
+
+So, we will increase your emergency fund by 0.77% and decrease your wants by 0.77%.
+
+**Planned changes:**
+*   Resize wants to 9.23% (10% - 0.77%)
+*   Resize emergency_fund to 2.27% (1.54% + 0.77%)
+
+**Suggestions:**
+*   With this adjustment, your "wants" bucket is now $599.75 per month. Consider reviewing your discretionary spending categories within "wants" to see if this new amount still allows for enjoyable experiences.
+*   Your emergency fund is now $147.60 per month, bringing you closer to your goal. We can continue to increase this as you get settled with your budget.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$6500.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=0.00%)
+  Bucket(name='rent', percentage=38.46%)
+  Bucket(name='savings', percentage=30.00%)
+  Bucket(name='needs', percentage=20.00%)
+  Bucket(name='wants', percentage=9.23%)
+  Bucket(name='emergency_fund', percentage=2.31%)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+Backend Response:
+SUBTRACT_AMOUNT wants 50.00
+ADD_AMOUNT emergency_fund 50.00
+

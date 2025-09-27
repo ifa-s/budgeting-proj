@@ -2,6 +2,7 @@ import json
 import sys
 import os
 from pathlib import Path
+from datetime import datetime
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -13,6 +14,33 @@ sys.path.insert(0, str(project_root))
 
 from backend.user_client import UserClient
 from backend.buckets.bucket import Bucket
+
+
+def log_system_context(user_client, enhanced_user_message, response):
+    """Append system context details to a log file under project logs directory."""
+    try:
+        logs_dir = project_root / "logs"
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        log_path = logs_dir / "system_context.log"
+
+        timestamp = datetime.utcnow().isoformat()
+        sections = [
+            f"[{timestamp} UTC]",
+            
+            "-- Enhanced User Message--",
+            enhanced_user_message,
+            "Frontend Response:",
+            response['frontend'],
+            "=== BUCKET MANAGER STATUS ===",
+            user_client.get_status(),
+            "Backend Response:",
+            response['backend'],
+            "",
+        ]
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write("\n".join(sections) + "\n")
+    except Exception as e:
+        print(f"[WARN] Failed to write system context log: {e}")
 
 
 def get_detailed_bucket_data(bucket_manager):
@@ -265,7 +293,11 @@ def send_message(request):
             response['frontend'], 
             updated_bucket_data
         )
-        
+        # Log system context before invoking the model
+        try:
+            log_system_context(user_client, enhanced_user_message, response)
+        except Exception as e:
+            print(f"[WARN] system context logging failed: {e}")
         return JsonResponse({
             'success': True,
             'frontend_response': response['frontend'],

@@ -51,8 +51,10 @@ class BucketManager:
         if "free" in self.buckets:
             free_percentage = self.buckets["free"].get_percentage()
             if percentage > free_percentage:
+                # If not enough, just use all that's left in free
+                percentage = free_percentage
+            if free_percentage == 0.0:
                 return False
-            
             # Resize "free" bucket to accommodate new bucket
             new_free_percentage = free_percentage - percentage
             self.buckets["free"].resize_percentage(new_free_percentage)
@@ -162,8 +164,17 @@ class BucketManager:
         total_without_bucket = self.get_total_percentage() - old_percentage
         
         if total_without_bucket + new_percentage > 100.0:
-            return False
-        
+            # Try resizing the free bucket to 0 and try again
+            if "free" in self.buckets and self.buckets["free"].get_percentage() > 0:
+                free_old_pct = self.buckets["free"].get_percentage()
+                self.buckets["free"].resize_percentage(0.0)
+                total_without_bucket = self.get_total_percentage() - old_percentage
+                if total_without_bucket + new_percentage > 100.0:
+                    # Still not possible, revert free bucket and fail
+                    self.buckets["free"].resize_percentage(free_old_pct)
+                    return False
+            else:
+                return False
         self.buckets[name].resize_percentage(new_percentage)
         return True
     
