@@ -18,6 +18,7 @@ Normalization and rules:
 - Bucket names: lowercase; use underscores instead of spaces; strip surrounding punctuation.
 - CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
+- Priotizie removing buckets before any other resizing is done
 - Unallocated capacity is implicit: unallocated% = 100 - sum(all bucket%). Never emit commands involving a "free" bucket. When adding or resizing buckets, ensure the total does not exceed 100%. If needed, first reduce other bucket percentages with `RESIZE_BUCKET` before increasing or adding a bucket.
 - PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
 - "rebalance" => REBALANCE (set dollar amounts to match current percentages).
@@ -234,3 +235,79 @@ Percentage valid: False
 OUTPUT:
 AUTO_RESIZE_TO_100
 REBALANCE
+
+USER_REQUEST: Could you portion my rent of 1010 as being a seperate chunk from needs?
+CURRENT CHART STATE: Your budget is visualized with 5 buckets. Total budget: $3330.00, Total allocated: 100.0%. Buckets: rent (0.0%), savings (20.0%), needs (50.0%), wants (30.0%), emergency_fund (0.0%)
+Frontend Response:
+Okay, I can definitely isolate your rent and ensure it's accounted for. Since we're aiming for the 50/30/20 rule, and rent is a significant "need," we'll need to adjust the percentages to accommodate it as a separate category while trying to stick to the spirit of the rule.
+
+**Planned changes:**
+*   Add rent at 30.33%
+*   Resize needs to 19.67%
+*   Resize wants to 30%
+*   Resize savings to 20%
+*   Resize emergency_fund to 0%
+
+**Suggestions:**
+*   With rent now as its own bucket at 30.33% ($1010), your "needs" bucket has been reduced to 19.67% ($655.67). This means you'll have less flexibility for other essential bills like utilities, groceries, transportation, and insurance. You may need to get very efficient in these areas.
+*   Your "wants" and "savings" buckets remain at 30% ($999.90) and 20% ($666.00) respectively, aligning with the general 50/30/20 guideline for those categories.
+*   Your "emergency_fund" is currently at 0%. It's highly recommended to prioritize building this back up. We can discuss strategies for allocating a portion of your "needs" or "savings" towards your emergency fund, or even slightly adjusting "wants" if that's a higher priority for you.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3330.00, total_percentage=69.67%):
+  Bucket(name='rent', percentage=0.00%)
+  Bucket(name='savings', percentage=20.00%)
+  Bucket(name='needs', percentage=19.67%)
+  Bucket(name='wants', percentage=30.00%)
+  Bucket(name='emergency_fund', percentage=0.00%)
+Total percentage: 69.67%
+Percentage valid: True
+============================================================
+Backend Response:
+RESIZE_BUCKET needs 19.67
+ADD_BUCKET rent 30.33
+
+-- Enhanced User Message--
+Help me reorganize my budget using the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment
+
+CURRENT CHART STATE: Your budget is visualized with 5 buckets. Total budget: $3030.00, Total allocated: 100.0%. Buckets: rent (33.3%), savings (31.0%), needs (20.0%), wants (10.0%), emergency_fund (5.7%)
+Frontend Response:
+Understood! We'll adjust your budget to align with the 50/30/20 rule. Since your rent is a significant portion of your "Needs," we'll need to balance that carefully.
+
+**Planned changes:**
+*   Resize needs to 50%
+*   Resize wants to 30%
+*   Resize savings to 20%
+*   Remove rent from percentages (it will be recalculated within Needs)
+*   Remove emergency_fund from percentages (it will be recalculated within Needs/current allocation)
+
+**Suggestions:**
+*   Your current rent is $1010, which is 33.33% of your income. To get your "Needs" down to 50%, this means you'll have $505 effectively for other essential needs beyond rent (utilities, groceries, transportation, etc.). This might be tight, so we should monitor this closely.
+*   Your "Wants" bucket is increasing from 10% to 30%, giving you an additional $606 per month for fun spending.
+*   Your "Savings" bucket is decreasing from 31% to 20%. This is still a solid amount, but it's half of what you were aiming for aggressively. We can re-evaluate if this aligns with your aggressive savings goals.
+*   We'll need to decide what to do with the existing emergency fund. Would you like to keep it as is, or would you prefer to integrate it into the new "Needs" or "Savings" buckets?
+*   We will also reallocate the original emergency\_fund percentage (5.67%) into the "Needs" bucket to help reach the 50% target.
+
+Let me know how you'd like to proceed with the emergency fund, and I'll finalize the updated budget!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3030.00, total_percentage=50.00%):
+  Bucket(name='savings', percentage=20.00%)
+  Bucket(name='needs', percentage=20.00%)
+  Bucket(name='wants', percentage=10.00%)
+Total percentage: 50.00%
+Percentage valid: True
+============================================================
+Backend Response:
+REMOVE_BUCKET rent
+REMOVE_BUCKET emergency_fund
+RESIZE_BUCKET savings 20.00
+RESIZE_BUCKET needs 50.00
+RESIZE_BUCKET wants 30.00
+
+
+
