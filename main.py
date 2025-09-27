@@ -1,59 +1,27 @@
 from __future__ import annotations
 
-import sys
-from typing import List, Dict, Any
-from pathlib import Path
+from typing import Dict
 
-try:
-    from backend.AIM import OpenRouterClient
-except Exception as exc:  # pragma: no cover
-    print("Failed to import OpenRouterClient from backend.AIM:", exc)
-    sys.exit(1)
+from user_client import UserClient
 
 
 def main() -> int:
-    # Initialize frontend client
+    # Initialize high-level user client
     try:
-        frontend = OpenRouterClient()
+        client = UserClient()
     except Exception as exc:  # pragma: no cover
-        print("Error initializing Frontend OpenRouterClient:", exc)
+        print("Error initializing UserClient:", exc)
         return 1
 
-    # Initialize backend client
-    try:
-        backend = OpenRouterClient()
-    except Exception as exc:  # pragma: no cover
-        print("Error initializing Backend OpenRouterClient:", exc)
-        return 1
-
-    # Load frontend system prompt
-    frontend_prompt_path = Path(__file__).resolve().parent / "promptfrontend.txt"
-    try:
-        frontend_system_prompt = frontend_prompt_path.read_text(encoding="utf-8").strip()
-    except FileNotFoundError:
-        frontend_system_prompt = "You are an expert financial advisor for a generation Z adult."
-    
-    # Load backend system prompt
-    backend_prompt_path = Path(__file__).resolve().parent / "promptbackend.txt"
-    try:
-        backend_system_prompt = backend_prompt_path.read_text(encoding="utf-8").strip()
-    except FileNotFoundError:
-        backend_system_prompt = "You are the backend command planner for a budgeting app."
-    
     print("Type your prompt and press Enter. Empty line to quit.\n")
-    
-    # Initialize frontend conversation context
-    frontend_messages: List[Dict[str, Any]] = [
-        {"role": "system", "content": frontend_system_prompt},
-    ]
+
+    # Prime the frontend and show initial assistant message
     try:
-        reply = frontend.chat(messages=frontend_messages)
+        reply = client.start_conversation()
     except Exception as exc:  # pragma: no cover
-        print("Error from OpenRouter:", exc)
+        print("Error from frontend model:", exc)
         return 1
     print(f"Assistant: {reply}\n")
-    # Add assistant's first reply to context
-    frontend_messages.append({"role": "assistant", "content": reply})
 
     while True:
         try:
@@ -65,33 +33,19 @@ def main() -> int:
         if not user_text:
             break
 
-        # Add user message to frontend context
-        frontend_messages.append({"role": "user", "content": user_text})
-
-        # Call frontend (financial advisor)
+        # Process via frontend + backend + execute planned commands
         try:
-            frontend_reply = frontend.chat(messages=frontend_messages)
-            print(f"🎯 FRONTEND: {frontend_reply}\n")
+            result: Dict[str, str] = client.process_user_input(user_text)
         except Exception as exc:  # pragma: no cover
-            print("Error from Frontend OpenRouter:", exc)
-            frontend_reply = ""
-            # Remove the last user message if the request failed
-            frontend_messages.pop()
+            print("Error processing input:", exc)
             continue
-        
-        # Add frontend reply to context
-        frontend_messages.append({"role": "assistant", "content": frontend_reply})
-        
-        # Call backend (command planner) with frontend response
-        backend_messages: List[Dict[str, Any]] = [
-            {"role": "system", "content": backend_system_prompt},
-            {"role": "user", "content": f"USER_REQUEST: {user_text}\nLLM_RESPONSE: {frontend_reply}"},
-        ]
-        try:
-            backend_reply = backend.chat(messages=backend_messages)
-            print(f"⚙️ BACKEND: {backend_reply}\n")
-        except Exception as exc:  # pragma: no cover
-            print("Error from Backend OpenRouter:", exc)
+
+        print(f"🎯 FRONTEND: {result.get('frontend', '')}\n")
+        print(f"⚙️ BACKEND: {result.get('backend', '')}\n")
+
+        commands_output = result.get("commands", "")
+        if commands_output:
+            print(f"🧰 COMMANDS:\n{commands_output}\n")
 
     return 0
 

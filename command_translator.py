@@ -1,8 +1,9 @@
 """
 Command Translator for BucketManager
 
-This class translates "fake" function calls from the backend prompt into real Python
-method calls on the BucketManager class. It parses commands like:
+This class translates simple, space-delimited commands from the backend prompt
+into real Python method calls on the BucketManager class. It parses commands by
+looking at the first word in each line as the command, e.g.:
 - SET_TOTAL_BUDGET <amount>
 - ADD_BUCKET <name> <percentage> [<current_value>]
 - REMOVE_BUCKET <name>
@@ -12,11 +13,10 @@ method calls on the BucketManager class. It parses commands like:
 - REBALANCE
 - AUTO_RESIZE_TO_100
 
-And executes them using the actual BucketManager methods.
+and executes them using the actual BucketManager methods.
 """
 
 import sys
-import re
 from typing import List, Optional, Tuple
 from pathlib import Path
 
@@ -35,16 +35,6 @@ class CommandTranslator:
     def __init__(self):
         """Initialize the translator with a BucketManager instance."""
         self.bucket_manager = BucketManager()
-        self.command_patterns = {
-            'SET_TOTAL_BUDGET': r'SET_TOTAL_BUDGET\s+(\d+(?:\.\d+)?)',
-            'ADD_BUCKET': r'ADD_BUCKET\s+(\w+)\s+(\d+(?:\.\d+)?)(?:\s+(\d+(?:\.\d+)?))?',
-            'REMOVE_BUCKET': r'REMOVE_BUCKET\s+(\w+)',
-            'RESIZE_BUCKET': r'RESIZE_BUCKET\s+(\w+)\s+(\d+(?:\.\d+)?)',
-            'ADD_AMOUNT': r'ADD_AMOUNT\s+(\w+)\s+(\d+(?:\.\d+)?)',
-            'SUBTRACT_AMOUNT': r'SUBTRACT_AMOUNT\s+(\w+)\s+(\d+(?:\.\d+)?)',
-            'REBALANCE': r'REBALANCE',
-            'AUTO_RESIZE_TO_100': r'AUTO_RESIZE_TO_100'
-        }
     
     def __call__(self, command_string: str) -> str:
         """
@@ -81,26 +71,19 @@ class CommandTranslator:
         return '\n'.join(status_lines)
     
     def parse_command(self, command: str) -> Optional[Tuple[str, List[str]]]:
+        """Parse a command by taking the first word as the command name.
+
+        Returns the uppercased command type and the remaining tokens as args.
         """
-        Parse a command string and return the command type and arguments.
-        
-        Args:
-            command (str): The command string to parse
-            
-        Returns:
-            Optional[Tuple[str, List[str]]]: Command type and arguments, or None if invalid
-        """
-        command = command.strip()
-        
-        for cmd_type, pattern in self.command_patterns.items():
-            match = re.match(pattern, command, re.IGNORECASE)
-            if match:
-                args = list(match.groups())
-                # Remove None values (optional arguments that weren't provided)
-                args = [arg for arg in args if arg is not None]
-                return cmd_type, args
-        
-        return None
+        line = command.strip()
+        if not line:
+            return None
+        tokens = line.split()
+        if not tokens:
+            return None
+        cmd_type = tokens[0].upper()
+        args = tokens[1:]
+        return cmd_type, args
     
     def execute_command(self, command: str) -> str:
         """

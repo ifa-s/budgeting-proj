@@ -6,7 +6,7 @@ add up to 100% and providing methods for financial operations.
 """
 
 from typing import Dict, List, Optional
-from bucket import Bucket
+from backend.buckets.bucket import Bucket
 
 
 class BucketManager:
