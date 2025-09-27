@@ -33,16 +33,7 @@ pip install django
 python -m django --version
 ```
 
-#### 3. Create a Django Project (Optional)
-```bash
-# Create a new Django project
-django-admin startproject budgeting_app .
-
-# Run the development server
-python manage.py runserver
-```
-
-#### 4. Deactivate Virtual Environment
+#### 3. Deactivate Virtual Environment
 ```bash
 # When you're done working, deactivate the virtual environment
 deactivate
@@ -67,9 +58,9 @@ Make API for the backend? Essentially translate bucketmanager aspects into easy 
 A
 
 Task Assignment (unfinished)
-- BucketManager
-- Bucket llm
-- SQLite & Database work (15 minute low prio q)
-- AIManager
-- API
+- BucketManager -- DONE MOSTLY
+- Bucket -- DONE MOSTLY
+- SQLite & Database work (15 minute low prio q) -- PROBABLY? TOMORROW Y'KNOW
+- AIManager -- MOSTLY DONE
+- API -- UHHHHH IDK DO WE NEED? USER_CLIENT MIGHT REPLACE THIS
 - Django frontend - yash n wizkid
