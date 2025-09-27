@@ -24,19 +24,20 @@ def main() -> int:
         system_prompt = prompt_path.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
         system_prompt = "You are an expert financial advisor for a generation Z adult."
-    initial_prompt = "How much is your rent? What percent would you want save? How much would you want to set aside for emergencies?"
+    
     print("Type your prompt and press Enter. Empty line to quit.\n")
-    user_text = input(initial_prompt)
-    system_prompt = f"{system_prompt}\n{initial_prompt}\n{user_text}"
     messages: List[Dict[str, Any]] = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_text},
-        ]
+        {"role": "system", "content": system_prompt},
+    ]
     try:
         reply = client.chat(messages=messages)
     except Exception as exc:  # pragma: no cover
         print("Error from OpenRouter:", exc)
+        return 1
     print(f"Assistant: {reply}\n")
+    # Add assistant's first reply to context
+    messages.append({"role": "assistant", "content": reply})
+
     while True:
         try:
             user_text = input("You: ").strip()
@@ -47,23 +48,23 @@ def main() -> int:
         if not user_text:
             break
 
-        messages: List[Dict[str, Any]] = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_text},
-        ]
+        # Add user message to context
+        messages.append({"role": "user", "content": user_text})
 
         try:
             reply = client.chat(messages=messages)
         except Exception as exc:  # pragma: no cover
             print("Error from OpenRouter:", exc)
+            # Remove the last user message if the request failed
+            messages.pop()
             continue
 
         print(f"Assistant: {reply}\n")
+        # Add assistant reply to context
+        messages.append({"role": "assistant", "content": reply})
 
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-
