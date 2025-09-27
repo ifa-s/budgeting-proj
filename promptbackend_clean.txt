@@ -21,6 +21,8 @@ Normalization and rules:
 - Unallocated capacity is implicit: unallocated% = 100 - sum(all bucket%). Never emit commands involving a "free" bucket. When adding or resizing buckets, ensure the total does not exceed 100%. If needed, first reduce other bucket percentages with `RESIZE_BUCKET` before increasing or adding a bucket.
 - PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
 - "make totals/percentages equal 100" => AUTO_RESIZE_TO_100.
+- Priotizie removing buckets before any other resizing is done
+- ENSURE Math is processed accurately.
 - "put/add/deposit $X to NAME" => ADD_AMOUNT name X.
 - "spend/withdraw/take $X from NAME" => SUBTRACT_AMOUNT name X.
 - "delete/remove NAME bucket" => REMOVE_BUCKET name.
@@ -537,3 +539,102 @@ Backend Response:
 SUBTRACT_AMOUNT wants 50.00
 ADD_AMOUNT emergency_fund 50.00
 
+-- Enhanced User Message--
+Help me reorganize my budget using the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment
+
+CURRENT CHART STATE: Your budget is visualized with 5 buckets. Total budget: $3030.00, Total allocated: 100.0%. Buckets: rent (33.3%), savings (31.0%), needs (20.0%), wants (10.0%), emergency_fund (5.7%)
+Frontend Response:
+Understood! We'll adjust your budget to align with the 50/30/20 rule. Since your rent is a significant portion of your "Needs," we'll need to balance that carefully.
+
+**Planned changes:**
+*   Resize needs to 50%
+*   Resize wants to 30%
+*   Resize savings to 20%
+*   Remove rent from percentages (it will be recalculated within Needs)
+*   Remove emergency_fund from percentages (it will be recalculated within Needs/current allocation)
+
+**Suggestions:**
+*   Your current rent is $1010, which is 33.33% of your income. To get your "Needs" down to 50%, this means you'll have $505 effectively for other essential needs beyond rent (utilities, groceries, transportation, etc.). This might be tight, so we should monitor this closely.
+*   Your "Wants" bucket is increasing from 10% to 30%, giving you an additional $606 per month for fun spending.
+*   Your "Savings" bucket is decreasing from 31% to 20%. This is still a solid amount, but it's half of what you were aiming for aggressively. We can re-evaluate if this aligns with your aggressive savings goals.
+*   We'll need to decide what to do with the existing emergency fund. Would you like to keep it as is, or would you prefer to integrate it into the new "Needs" or "Savings" buckets?
+*   We will also reallocate the original emergency\_fund percentage (5.67%) into the "Needs" bucket to help reach the 50% target.
+
+Let me know how you'd like to proceed with the emergency fund, and I'll finalize the updated budget!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3030.00, total_percentage=50.00%):
+  Bucket(name='savings', percentage=20.00%)
+  Bucket(name='needs', percentage=20.00%)
+  Bucket(name='wants', percentage=10.00%)
+Total percentage: 50.00%
+Percentage valid: True
+============================================================
+Backend Response:
+REMOVE_BUCKET rent
+REMOVE_BUCKET emergency_fund
+RESIZE_BUCKET needs 50.00
+RESIZE_BUCKET wants 30.00
+
+-- Enhanced User Message--
+Increase Emergency Fund by 2%
+
+CURRENT CHART STATE: Your budget is visualized with 5 buckets. Total budget: $3010.00, Total allocated: 100.0%. Buckets: rent (34.2%), savings (30.0%), needs (20.0%), wants (10.0%), emergency_fund (5.8%)
+Frontend Response:
+Understood. We'll increase your emergency fund by 2% and adjust other buckets accordingly to maintain 100% allocation.
+
+**Planned changes:**
+*   Resize emergency_fund to 7.78%
+*   Resize savings to 28.00%
+
+**Suggestions:**
+*   Your emergency fund will now receive an additional $60.20 per month, bringing its total to $233.40. This will help you reach your savings goal faster.
+*   Your savings bucket will be reduced by 1.78%, or $53.58 per month, to accommodate the increase in the emergency fund. It's great you're prioritizing building a strong safety net!
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3010.00, total_percentage=98.22%):
+  Bucket(name='rent', percentage=34.22%)
+  Bucket(name='savings', percentage=28.00%)
+  Bucket(name='needs', percentage=20.00%)
+  Bucket(name='wants', percentage=10.00%)
+  Bucket(name='emergency_fund', percentage=7.78%)
+Total percentage: 98.22%
+Percentage valid: True
+============================================================
+Backend Response:
+RESIZE_BUCKET savings 28.00
+RESIZE_BUCKET emergency_fund 7.78
+-- Enhanced User Message--
+Add giving at 5% and decrease savings by 5%
+
+CURRENT CHART STATE: Your budget is visualized with 5 buckets. Total budget: $3010.00, Total allocated: 100.0%. Buckets: rent (33.5%), savings (30.0%), needs (23.4%), wants (8.0%), emergency_fund (5.0%)
+Frontend Response:
+Understood.
+
+**Planned changes:**
+*   Add giving at 5%
+*   Resize savings to 25%
+
+**Suggestions:**
+*   Your "savings" bucket is now $752.50, which is still a substantial amount. You can decide if this 25% is still sufficient for your aggressive savings goals or if you'd like to adjust it further in the future.
+*   The new "giving" bucket at 5% ($150.50) allows you to allocate funds towards charitable contributions or other forms of giving.
+=== BUCKET MANAGER STATUS ===
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3010.00, total_percentage=95.00%):
+  Bucket(name='rent', percentage=33.55%)
+  Bucket(name='savings', percentage=25.00%)
+  Bucket(name='needs', percentage=23.45%)
+  Bucket(name='wants', percentage=8.00%)
+  Bucket(name='emergency_fund', percentage=5.00%)
+Total percentage: 95.00%
+Percentage valid: True
+============================================================
+Backend Response:
+RESIZE_BUCKET savings 25.00
+ADD_BUCKET giving 5.00

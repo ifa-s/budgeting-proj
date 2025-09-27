@@ -18,7 +18,6 @@ Normalization and rules:
 - Bucket names: lowercase; use underscores instead of spaces; strip surrounding punctuation.
 - CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
-- Priotizie removing buckets before any other resizing is done
 - Unallocated capacity is implicit: unallocated% = 100 - sum(all bucket%). Never emit commands involving a "free" bucket. When adding or resizing buckets, ensure the total does not exceed 100%. If needed, first reduce other bucket percentages with `RESIZE_BUCKET` before increasing or adding a bucket.
 - PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
 - "rebalance" => REBALANCE (set dollar amounts to match current percentages).
@@ -305,7 +304,6 @@ Percentage valid: True
 Backend Response:
 REMOVE_BUCKET rent
 REMOVE_BUCKET emergency_fund
-RESIZE_BUCKET savings 20.00
 RESIZE_BUCKET needs 50.00
 RESIZE_BUCKET wants 30.00
 

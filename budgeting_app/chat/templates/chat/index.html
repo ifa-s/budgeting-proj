@@ -1704,124 +1704,15 @@
             generateRecommendations(bucketData, frontendResponse, backendRecommendations = []) {
                 const newRecommendations = [];
                 
-                // Add backend-generated recommendations first
+                // Surface only backend-provided (AI) recommendations
                 if (backendRecommendations && Array.isArray(backendRecommendations)) {
                     backendRecommendations.forEach(rec => {
                         newRecommendations.push({
                             ...rec,
                             source: 'backend',
-                            action_text: rec.action_text || rec.text // Use action_text if available, fallback to text
+                            action_text: rec.action_text || rec.text
                         });
                     });
-                }
-                
-                // Analyze budget data for recommendations
-                if (bucketData && bucketData.buckets) {
-                    const totalBudget = bucketData.total_budget || 0;
-                    const totalPercent = bucketData.total_percentage || 0;
-                    const buckets = bucketData.buckets || [];
-                    
-                    // Over-allocation warning
-                    if (totalPercent > 100) {
-                        newRecommendations.push({
-                            id: 'over_allocated',
-                            text: `Fix over-allocation (${totalPercent.toFixed(1)}%)`,
-                            action_text: `I've allocated ${totalPercent.toFixed(1)}% of my budget. Help me rebalance my buckets to stay within 100%`,
-                            category: 'Budget Balance',
-                            priority: 'high',
-                            type: 'warning',
-                            source: 'frontend'
-                        });
-                    }
-                    
-                    // Under-allocation suggestion
-                    if (totalPercent < 90 && buckets.length > 0) {
-                        const remaining = 100 - totalPercent;
-                        newRecommendations.push({
-                            id: 'under_allocated',
-                            text: `Optimize unallocated budget (${remaining.toFixed(1)}%)`,
-                            action_text: `I have ${remaining.toFixed(1)}% unallocated. Help me create additional buckets for savings, investments, or other financial goals`,
-                            category: 'Optimization',
-                            priority: 'medium',
-                            type: 'suggestion',
-                            source: 'frontend'
-                        });
-                    }
-                    
-                    // Emergency fund recommendation
-                    const hasEmergencyFund = buckets.some(bucket => 
-                        bucket.name.toLowerCase().includes('emergency') || 
-                        bucket.name.toLowerCase().includes('savings')
-                    );
-                    
-                    if (!hasEmergencyFund && buckets.length >= 2) {
-                        newRecommendations.push({
-                            id: 'emergency_fund',
-                            text: 'Add emergency fund bucket',
-                            action_text: 'Create an emergency fund bucket with 10-20% of my budget for financial security',
-                            category: 'Safety Net',
-                            priority: 'high',
-                            type: 'action',
-                            source: 'frontend'
-                        });
-                    }
-                    
-                    // 50/30/20 rule suggestion
-                    if (buckets.length >= 3 && totalBudget > 0) {
-                        newRecommendations.push({
-                            id: 'fifty_thirty_twenty',
-                            text: 'Apply 50/30/20 budget rule',
-                            action_text: 'Help me reorganize my budget using the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment',
-                            category: 'Best Practice',
-                            priority: 'low',
-                            type: 'tip',
-                            source: 'frontend'
-                        });
-                    }
-                }
-                
-                // Analyze AI response for contextual recommendations
-                if (frontendResponse) {
-                    const response = frontendResponse.toLowerCase();
-                    
-                    // Debt mention
-                    if (response.includes('debt') || response.includes('loan') || response.includes('credit')) {
-                        newRecommendations.push({
-                            id: 'debt_payoff',
-                            text: 'Create debt payoff strategy',
-                            action_text: 'Help me prioritize and create a plan to pay off my high-interest debt using the avalanche method',
-                            category: 'Debt Management',
-                            priority: 'high',
-                            type: 'action',
-                            source: 'frontend'
-                        });
-                    }
-                    
-                    // Investment mention
-                    if (response.includes('invest') || response.includes('retirement') || response.includes('401k')) {
-                        newRecommendations.push({
-                            id: 'investment_automation',
-                            text: 'Set up automatic investments',
-                            action_text: 'Help me create an investment strategy with automatic monthly contributions to take advantage of dollar-cost averaging',
-                            category: 'Investment',
-                            priority: 'medium',
-                            type: 'tip',
-                            source: 'frontend'
-                        });
-                    }
-                    
-                    // Subscription mention
-                    if (response.includes('subscription') || response.includes('streaming') || response.includes('monthly')) {
-                        newRecommendations.push({
-                            id: 'subscription_audit',
-                            text: 'Audit subscription services',
-                            action_text: 'Help me review and cancel unused subscriptions to free up budget space',
-                            category: 'Cost Cutting',
-                            priority: 'medium',
-                            type: 'action',
-                            source: 'frontend'
-                        });
-                    }
                 }
                 
                 // Add new recommendations
