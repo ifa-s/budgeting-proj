@@ -1347,8 +1347,18 @@
             
             updateChartTheme() {
                 const isDark = this.currentTheme === 'dark';
-                const gridColor = isDark ? '#404040' : '#f3f4f6';
-                const textColor = isDark ? '#ffffff' : '#000000';
+                const rootStyles = getComputedStyle(document.documentElement);
+                const gridColor = (rootStyles.getPropertyValue('--chart-grid') || '').trim() || (isDark ? '#404040' : '#f3f4f6');
+                const textColor = (rootStyles.getPropertyValue('--text-primary') || '').trim() || (isDark ? '#ffffff' : '#000000');
+                const tooltipBg = (rootStyles.getPropertyValue('--assistant-bg') || '').trim() || (isDark ? '#2d2d2d' : '#ffffff');
+
+                // Apply global defaults so legend text honors theme regardless of custom generators
+                if (window.Chart && Chart.defaults) {
+                    Chart.defaults.color = textColor;
+                    if (Chart.defaults.plugins && Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                        Chart.defaults.plugins.legend.labels.color = textColor;
+                    }
+                }
                 
                 // Update budget chart
                 if (this.budgetChart) {
@@ -1378,6 +1388,14 @@
                         
                         return labels;
                     };
+                    // Update tooltip theme colors
+                    if (this.budgetChart.options.plugins.tooltip) {
+                        this.budgetChart.options.plugins.tooltip.titleColor = textColor;
+                        this.budgetChart.options.plugins.tooltip.bodyColor = textColor;
+                        this.budgetChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                        this.budgetChart.options.plugins.tooltip.borderColor = gridColor;
+                        this.budgetChart.options.plugins.tooltip.borderWidth = 1;
+                    }
                     this.budgetChart.update();
                 }
                 
@@ -1388,6 +1406,13 @@
                     this.spendingChart.options.scales.y.grid.color = gridColor;
                     this.spendingChart.options.scales.x.ticks.color = textColor;
                     this.spendingChart.options.scales.y.ticks.color = textColor;
+                    if (this.spendingChart.options.plugins.tooltip) {
+                        this.spendingChart.options.plugins.tooltip.titleColor = textColor;
+                        this.spendingChart.options.plugins.tooltip.bodyColor = textColor;
+                        this.spendingChart.options.plugins.tooltip.backgroundColor = tooltipBg;
+                        this.spendingChart.options.plugins.tooltip.borderColor = gridColor;
+                        this.spendingChart.options.plugins.tooltip.borderWidth = 1;
+                    }
                     this.spendingChart.update();
                 }
             }
@@ -1395,6 +1420,18 @@
             initializeCharts() {
                 // Initialize Budget Allocation Chart (Pie Chart)
                 const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+                const rootStyles = getComputedStyle(document.documentElement);
+                const legendTextColor = (rootStyles.getPropertyValue('--text-primary') || '').trim() || (this.currentTheme === 'dark' ? '#ffffff' : '#000000');
+                const tooltipBg = (rootStyles.getPropertyValue('--assistant-bg') || '').trim() || (this.currentTheme === 'dark' ? '#2d2d2d' : '#ffffff');
+                const gridColor = (rootStyles.getPropertyValue('--chart-grid') || '').trim() || (this.currentTheme === 'dark' ? '#404040' : '#f3f4f6');
+
+                // Set global defaults at creation time
+                if (window.Chart && Chart.defaults) {
+                    Chart.defaults.color = legendTextColor;
+                    if (Chart.defaults.plugins && Chart.defaults.plugins.legend && Chart.defaults.plugins.legend.labels) {
+                        Chart.defaults.plugins.legend.labels.color = legendTextColor;
+                    }
+                }
                 this.budgetChart = new Chart(budgetCtx, {
                     type: 'doughnut',
                     data: {
@@ -1423,7 +1460,7 @@
                                 labels: {
                                     padding: 10,
                                     font: { size: 12 },
-                                    color: this.currentTheme === 'dark' ? '#ffffff' : '#000000',
+                                    color: legendTextColor,
                                     boxWidth: 14,
                                     boxHeight: 14,
                                     usePointStyle: true,
@@ -1465,6 +1502,11 @@
                                 onClick: null // Disable legend clicking to prevent chart issues
                             },
                             tooltip: {
+                                titleColor: legendTextColor,
+                                bodyColor: legendTextColor,
+                                backgroundColor: tooltipBg,
+                                borderColor: gridColor,
+                                borderWidth: 1,
                                 callbacks: {
                                     label: function(context) {
                                         const label = context.label || '';
