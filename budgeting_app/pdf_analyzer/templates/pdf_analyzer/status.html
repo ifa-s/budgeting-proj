@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Status - Budget AI Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-primary: #f7f7f8;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f9fafb;
+            --bg-quaternary: #f3f4f6;
+            --text-primary: #202123;
+            --text-secondary: #374151;
+            --text-tertiary: #6b7280;
+            --border-primary: #e5e5e5;
+            --border-secondary: #e5e7eb;
+            --border-tertiary: #d1d5db;
+            --accent-primary: #10a37f;
+            --accent-hover: #0f8b6b;
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #383838;
+            --bg-quaternary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #e5e5e5;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #404040;
+            --border-secondary: #525252;
+            --border-tertiary: #404040;
+            --accent-primary: #10a37f;
+            --accent-hover: #0d8f70;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+
+        .header h1 {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: all 0.3s ease;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-quaternary);
+            border-color: var(--accent-primary);
+        }
+
+        .nav-link {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: var(--bg-quaternary);
+            border-color: var(--accent-primary);
+            color: var(--text-primary);
+        }
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+        }
+        
+        .status-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .processing-animation {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .progress-step {
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        
+        .step-active {
+            background-color: var(--vt-orange);
+            color: white;
+        }
+        
+        .step-completed {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .step-pending {
+            background-color: #e9ecef;
+            color: #6c757d;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .status-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+        }
+
+        .status-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 0.75rem;
+            padding: 3rem;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .processing-animation {
+            margin-bottom: 2rem;
+        }
+
+        .processing-animation i {
+            color: var(--accent-primary);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .progress {
+            background: var(--bg-quaternary);
+            border-radius: 0.5rem;
+            height: 12px;
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            background: var(--accent-primary);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 0.5rem;
+        }
+
+        .progress-bar-animated {
+            background-image: linear-gradient(
+                45deg,
+                rgba(255,255,255,.15) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255,255,255,.15) 50%,
+                rgba(255,255,255,.15) 75%,
+                transparent 75%,
+                transparent
+            );
+            background-size: 1rem 1rem;
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+
+        @keyframes progress-bar-stripes {
+            from { background-position: 1rem 0; }
+            to { background-position: 0 0; }
+        }
+
+        .btn {
+            background: var(--accent-primary);
+            border: 1px solid var(--accent-primary);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-text);
+            border-color: var(--success-text);
+        }
+
+        .file-info-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .file-info-header {
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem;
+            border-radius: 0.75rem 0.75rem 0 0;
+        }
+
+        .file-info-content {
+            padding: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1><i class="fas fa-cog fa-spin"></i> Processing Bank Statement</h1>
+            <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">{{ pdf_upload.file_name }}</p>
+        </div>
+        <div class="header-controls">
+            <a href="/" class="nav-link">
+                <i class="fas fa-comments"></i> Budget Chat
+            </a>
+            <a href="{% url 'pdf_analyzer:index' %}" class="nav-link">
+                <i class="fas fa-arrow-left"></i> Back to Upload
+            </a>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <i class="fas fa-sun" id="themeIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="status-wrapper">
+            <div class="status-card">
+                <div class="status-content">
+                    <!-- Processing Status -->
+                    <div class="processing-animation">
+                        <i class="fas fa-file-pdf fa-4x"></i>
+                    </div>
+                        
+                        <h3 class="mb-3">
+                            {% if pdf_upload.status == 'uploaded' %}
+                                Ready to Process
+                            {% elif pdf_upload.status == 'processing' %}
+                                Analyzing Your Bank Statement...
+                            {% else %}
+                                Processing Complete
+                            {% endif %}
+                        </h3>
+                        
+                        <p class="text-muted mb-4">
+                            {% if pdf_upload.status == 'uploaded' %}
+                                Click the button below to start processing your bank statement.
+                            {% elif pdf_upload.status == 'processing' %}
+                                Our AI is extracting transactions and generating financial insights. This usually takes 10-30 seconds.
+                            {% else %}
+                                Your financial analysis is ready to view!
+                            {% endif %}
+                        </p>
+                        
+                        <!-- Progress Bar -->
+                        <div class="progress mb-4" style="height: 20px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 role="progressbar" 
+                                 style="width: {{ progress_percentage }}%"
+                                 id="progressBar">
+                                {{ progress_percentage }}%
+                            </div>
+                        </div>
+                        
+                        <!-- Processing Steps -->
+                        <div class="row text-center mb-4">
+                            <div class="col-md-3">
+                                <div class="progress-step step-completed">
+                                    <i class="fas fa-upload"></i>
+                                </div>
+                                <h6>Upload</h6>
+                                <p class="small text-muted">File uploaded successfully</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-step {% if pdf_upload.status == 'processing' %}step-active{% elif pdf_upload.status == 'completed' %}step-completed{% else %}step-pending{% endif %}">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h6>Extract</h6>
+                                <p class="small text-muted">Reading transactions from PDF</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-step {% if pdf_upload.status == 'processing' %}step-active{% elif pdf_upload.status == 'completed' %}step-completed{% else %}step-pending{% endif %}">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <h6>Analyze</h6>
+                                <p class="small text-muted">AI analysis with Gemini</p>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="progress-step {% if pdf_upload.status == 'completed' %}step-completed{% else %}step-pending{% endif %}">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h6>Results</h6>
+                                <p class="small text-muted">Insights ready to view</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Status Message -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            {% if pdf_upload.status == 'uploaded' %}
+                                Your file is ready to be processed. Click the button below to start analysis.
+                            {% elif pdf_upload.status == 'processing' %}
+                                We're analyzing your bank statement and generating personalized insights. This usually takes 30-60 seconds.
+                            {% else %}
+                                Processing complete! You'll be redirected to your results shortly.
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        {% if pdf_upload.status == 'uploaded' %}
+                            <a href="{% url 'pdf_analyzer:process_pdf' pdf_upload.id %}" 
+                               class="btn btn-primary btn-lg">
+                                <i class="fas fa-play"></i> Start Processing
+                            </a>
+                        {% elif pdf_upload.status == 'processing' %}
+                            <div class="d-flex justify-content-center align-items-center">
+                                <div class="spinner-border text-primary me-2" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span>Processing in progress...</span>
+                            </div>
+                        {% elif pdf_upload.status == 'completed' %}
+                            <a href="{% url 'pdf_analyzer:analysis_results' pdf_upload.id %}" 
+                               class="btn btn-success btn-lg">
+                                <i class="fas fa-eye"></i> View Results
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+            
+            <!-- File Info -->
+            <div class="file-info-card">
+                <div class="file-info-header">
+                    <h5><i class="fas fa-file-alt"></i> File Information</h5>
+                </div>
+                <div class="file-info-content">
+                    <div>
+                        <strong>File Name:</strong><br>
+                        <span style="color: var(--text-secondary);">{{ pdf_upload.file_name }}</span>
+                    </div>
+                    <div>
+                        <strong>File Size:</strong><br>
+                        <span style="color: var(--text-secondary);">{{ pdf_upload.file_size|filesizeformat }}</span>
+                    </div>
+                    <div>
+                        <strong>Uploaded:</strong><br>
+                        <span style="color: var(--text-secondary);">{{ pdf_upload.uploaded_at|date:"M j, Y g:i A" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Auto-redirect if already completed
+        {% if pdf_upload.status == 'completed' %}
+        setTimeout(function() {
+            window.location.href = '{% url "pdf_analyzer:analysis_results" pdf_upload.id %}';
+        }, 1000);
+        {% endif %}
+        
+        // Auto-refresh for processing status
+        {% if pdf_upload.status == 'processing' %}
+        let refreshInterval = setInterval(function() {
+            fetch(`{% url 'pdf_analyzer:api_status' pdf_upload.id %}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'completed') {
+                        clearInterval(refreshInterval);
+                        window.location.href = data.results_url;
+                    } else if (data.status === 'failed') {
+                        clearInterval(refreshInterval);
+                        alert('Processing failed. Please try again.');
+                        window.location.href = '{% url "pdf_analyzer:index" %}';
+                    }
+                })
+                .catch(error => {
+                    console.error('Status check failed:', error);
+                });
+        }, 2000); // Check every 2 seconds
+        {% endif %}
+    </script>
+</body>
+</html>
