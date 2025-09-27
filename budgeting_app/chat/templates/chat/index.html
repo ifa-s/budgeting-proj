@@ -794,6 +794,11 @@
             transition: all 0.3s ease;
         }
 
+        /* System message visibility toggle */
+        .system-hidden .message.system {
+            display: none;
+        }
+
         @media (max-width: 1024px) {
             .main-content {
                 flex-direction: column;
@@ -906,7 +911,7 @@
                 <button class="theme-toggle" id="themeToggle" title="Toggle dark/light theme">
                     🌙
                 </button>
-                <button class="theme-toggle" id="debugButton" title="Debug charts" style="margin-left: 0.5rem;">
+                <button class="theme-toggle" id="debugButton" title="Toggle system messages" style="margin-left: 0.5rem;">
                     🔧
                 </button>
                 <button class="theme-toggle" id="exportButton" title="Export budget data" style="margin-left: 0.5rem;">
@@ -1070,8 +1075,8 @@
                 // Initialize theme
                 this.initializeTheme();
                 
-                // Initialize debug button
-                this.debugButton.addEventListener('click', () => this.debugCharts());
+                // Initialize system messages filter on the Debug button
+                this.debugButton.addEventListener('click', () => this.toggleSystemMessages());
                 
                 // Initialize export button
                 this.exportButton.addEventListener('click', () => this.exportData());
@@ -1081,6 +1086,9 @@
                 
                 // Initialize charts
                 this.initializeCharts();
+
+                // Apply stored preference for system messages visibility
+                this.initializeSystemFilter();
                 
                 // Handle window resize for chart responsiveness
                 window.addEventListener('resize', () => {
@@ -1939,7 +1947,7 @@
             
             addMessage(sender, content, type = 'normal') {
                 const messageDiv = document.createElement('div');
-                messageDiv.className = `message ${sender}`;
+                messageDiv.className = `message ${sender}${type === 'system' ? ' system' : ''}`;
                 
                 const avatar = document.createElement('div');
                 avatar.className = 'message-avatar';
@@ -1959,6 +1967,29 @@
                 messageDiv.appendChild(contentDiv);
                 
                 this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            initializeSystemFilter() {
+                const stored = localStorage.getItem('show-system-messages');
+                this.showSystemMessages = stored === null ? true : stored === 'true';
+                this.applySystemFilter();
+            }
+
+            applySystemFilter() {
+                if (this.showSystemMessages) {
+                    document.body.classList.remove('system-hidden');
+                    this.debugButton.title = 'Hide system messages';
+                } else {
+                    document.body.classList.add('system-hidden');
+                    this.debugButton.title = 'Show system messages';
+                }
+            }
+
+            toggleSystemMessages() {
+                this.showSystemMessages = !this.showSystemMessages;
+                localStorage.setItem('show-system-messages', this.showSystemMessages ? 'true' : 'false');
+                this.applySystemFilter();
                 this.scrollToBottom();
             }
             
