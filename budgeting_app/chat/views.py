@@ -14,6 +14,7 @@ sys.path.insert(0, str(project_root))
 
 from backend.user_client import UserClient
 from backend.buckets.bucket import Bucket
+from backend.AIM import OpenRouterClient
 
 
 def log_system_context(user_client, enhanced_user_message, response):
@@ -94,158 +95,86 @@ def get_detailed_bucket_data(bucket_manager):
 
 
 def generate_backend_recommendations(user_message, ai_response, bucket_data):
-    """Generate intelligent recommendations based on user interaction and budget state"""
-    recommendations = []
-    
+    """Use an AI model to generate three actionable budget recommendations.
+
+    The suggestions should focus on reallocating percentages between existing buckets
+    or proposing new buckets, while respecting that total allocation must not exceed 100%.
+    Returns a list of up to three items with keys: id, text, action_text, category, priority.
+    """
     try:
-        user_text = user_message.lower()
-        ai_text = ai_response.lower()
-        
-        # Budget setup recommendations
-        if 'income' in user_text or 'salary' in user_text or 'make' in user_text:
-            recommendations.append({
-                'id': 'budget_foundation',
-                'text': 'Set up a 50/30/20 budget structure',
-                'action_text': 'Create buckets for needs (50%), wants (30%), and savings (20%) based on my income',
-                'category': 'Budget Setup',
-                'priority': 'medium',
-                'trigger': 'income_mentioned'
+        safe_bucket_data = bucket_data or {}
+        context = {
+            "user_message": user_message or "",
+            "ai_response": ai_response or "",
+            "bucket_data": {
+                "total_budget": safe_bucket_data.get("total_budget", 0),
+                "total_percentage": safe_bucket_data.get("total_percentage", 0),
+                "buckets": [
+                    {
+                        "name": b.get("name", ""),
+                        "percentage": float(b.get("percentage", 0)),
+                    }
+                    for b in safe_bucket_data.get("buckets", [])
+                ],
+            },
+        }
+
+        system_prompt = (
+            "You are a budgeting strategist. Generate exactly three practical suggestions to either "
+            "(a) move percentage allocations between existing buckets, or (b) add a new bucket with a suggested percentage. "
+            "Consider unallocated space and keep total allocation within 100%. If suggesting moves, ensure amounts are feasible. "
+            "Keep each suggestion short and clear."
+        )
+
+        schema_instructions = (
+            "Respond in strict JSON with a top-level object containing a 'recommendations' array. "
+            "Each item must include: id (string), text (string), action_text (string), category (string), priority (one of: high, medium, low). "
+            "Text should be a brief title; action_text should be a user-clickable command phrased as a request. "
+            "Do not include markdown or prose outside the JSON."
+        )
+
+        client = OpenRouterClient()
+        raw = client.chat(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "system", "content": schema_instructions},
+                {"role": "user", "content": json.dumps({"context": context})},
+            ],
+            json_mode=True,
+            temperature=0.6,
+            max_tokens=600,
+        )
+
+        data = json.loads(raw) if isinstance(raw, str) else (raw or {})
+        items = []
+        if isinstance(data, dict) and isinstance(data.get("recommendations"), list):
+            items = data["recommendations"]
+        elif isinstance(data, list):
+            items = data
+
+        normalized = []
+        for idx, item in enumerate(items[:3]):
+            if not isinstance(item, dict):
+                continue
+            rec_id = str(item.get("id") or f"ai_rec_{idx+1}")
+            text = str(item.get("text") or "Budget suggestion")
+            action_text = str(item.get("action_text") or text)
+            category = str(item.get("category") or "Budget Optimization")
+            priority = str(item.get("priority") or "medium").lower()
+            if priority not in {"high", "medium", "low"}:
+                priority = "medium"
+            normalized.append({
+                "id": rec_id,
+                "text": text,
+                "action_text": action_text,
+                "category": category,
+                "priority": priority,
             })
-        
-        # Spending category recommendations
-        if any(word in user_text for word in ['restaurant', 'eating out', 'food', 'groceries']):
-            recommendations.append({
-                'id': 'food_budget_tip',
-                'text': 'Optimize food spending with meal planning',
-                'action_text': 'Help me create a food budget and meal planning strategy to reduce costs by 15-20%',
-                'category': 'Food & Dining',
-                'priority': 'low',
-                'trigger': 'food_spending'
-            })
-        
-        # Housing recommendations
-        if any(word in user_text for word in ['rent', 'mortgage', 'housing', 'apartment']):
-            recommendations.append({
-                'id': 'housing_rule',
-                'text': 'Ensure housing costs stay under 30% of income',
-                'action_text': 'Review my housing costs and suggest adjustments if they exceed 30% of my income',
-                'category': 'Housing',
-                'priority': 'high',
-                'trigger': 'housing_mentioned'
-            })
-        
-        # Emergency fund recommendations
-        if 'emergency' in user_text or 'savings' in user_text:
-            recommendations.append({
-                'id': 'emergency_goal',
-                'text': 'Build a 3-6 month emergency fund',
-                'action_text': 'Create an emergency fund bucket and calculate how much I need for 3-6 months of expenses',
-                'category': 'Emergency Fund',
-                'priority': 'high',
-                'trigger': 'emergency_discussed'
-            })
-        
-        # Entertainment spending
-        if any(word in user_text for word in ['entertainment', 'movies', 'games', 'streaming', 'netflix']):
-            recommendations.append({
-                'id': 'entertainment_audit',
-                'text': 'Audit entertainment subscriptions',
-                'action_text': 'Help me review and optimize my entertainment subscriptions to save money',
-                'category': 'Entertainment',
-                'priority': 'medium',
-                'trigger': 'entertainment_spending'
-            })
-        
-        # Transportation recommendations
-        if any(word in user_text for word in ['car', 'gas', 'transportation', 'uber', 'lyft']):
-            recommendations.append({
-                'id': 'transport_optimization',
-                'text': 'Optimize transportation costs',
-                'action_text': 'Analyze my transportation spending and suggest cost-saving alternatives like carpooling or public transit',
-                'category': 'Transportation',
-                'priority': 'medium',
-                'trigger': 'transport_mentioned'
-            })
-        
-        # Investment mentions
-        if any(word in user_text for word in ['invest', 'stocks', 'retirement', '401k', 'ira']):
-            recommendations.append({
-                'id': 'investment_consistency',
-                'text': 'Set up automatic investments',
-                'action_text': 'Help me create an investment strategy with automatic monthly contributions',
-                'category': 'Investment',
-                'priority': 'medium',
-                'trigger': 'investment_interest'
-            })
-        
-        # Debt management
-        if any(word in user_text for word in ['debt', 'credit card', 'loan', 'payment']):
-            recommendations.append({
-                'id': 'debt_strategy',
-                'text': 'Create a debt payoff strategy',
-                'action_text': 'Help me prioritize and create a plan to pay off my high-interest debt using the avalanche method',
-                'category': 'Debt Management',
-                'priority': 'high',
-                'trigger': 'debt_mentioned'
-            })
-        
-        # Budget analysis recommendations based on current state
-        if bucket_data and bucket_data.get('buckets'):
-            total_percentage = bucket_data.get('total_percentage', 0)
-            total_budget = bucket_data.get('total_budget', 0)
-            buckets = bucket_data.get('buckets', [])
-            
-            # Over-allocation warning
-            if total_percentage > 100:
-                recommendations.append({
-                    'id': 'over_allocated_fix',
-                    'text': 'Fix over-allocation issue',
-                    'action_text': f'I\'ve allocated {total_percentage:.1f}% of my budget. Help me rebalance my buckets to stay within 100%',
-                    'category': 'Budget Balance',
-                    'priority': 'high',
-                    'trigger': 'over_allocation'
-                })
-            
-            # Under-allocation suggestion
-            elif total_percentage < 80 and len(buckets) > 0:
-                remaining = 100 - total_percentage
-                recommendations.append({
-                    'id': 'under_allocated_optimize',
-                    'text': 'Optimize unallocated budget',
-                    'action_text': f'I have {remaining:.1f}% unallocated. Help me create additional buckets for savings, investments, or other financial goals',
-                    'category': 'Budget Optimization',
-                    'priority': 'medium',
-                    'trigger': 'under_allocation'
-                })
-            
-            # Emergency fund check
-            has_emergency = any('emergency' in bucket.get('name', '').lower() or 'savings' in bucket.get('name', '').lower() for bucket in buckets)
-            if not has_emergency and len(buckets) >= 2:
-                recommendations.append({
-                    'id': 'add_emergency_fund',
-                    'text': 'Add emergency fund bucket',
-                    'action_text': 'Create an emergency fund bucket with 10-20% of my budget for financial security',
-                    'category': 'Safety Net',
-                    'priority': 'high',
-                    'trigger': 'missing_emergency_fund'
-                })
-            
-            # High spending category analysis
-            high_spending_buckets = [b for b in buckets if b.get('percentage', 0) > 40]
-            if high_spending_buckets:
-                bucket_name = high_spending_buckets[0]['name']
-                recommendations.append({
-                    'id': 'review_high_spending',
-                    'text': f'Review {bucket_name} spending',
-                    'action_text': f'My {bucket_name} bucket is {high_spending_buckets[0]["percentage"]:.1f}% of my budget. Help me analyze if this is appropriate or if I should adjust it',
-                    'category': 'Spending Analysis',
-                    'priority': 'medium',
-                    'trigger': 'high_spending_category'
-                })
-            
-        return recommendations
-        
+
+        return normalized[:3]
+
     except Exception as e:
+        print(f"[WARN] AI recommendation generation failed: {e}")
         return []
 
 
