@@ -104,11 +104,22 @@ class CommandTranslator:
                 percentage = float(args[1])
                 current_value = float(args[2]) if len(args) > 2 else 0.0
                 
-                success = self.bucket_manager.add_bucket(name, percentage, current_value)
-                if success:
-                    return f"✅ Added bucket '{name}' with {percentage}% allocation"
+                # Check if bucket already exists
+                existing_bucket = self.bucket_manager.get_bucket(name)
+                if existing_bucket is not None:
+                    # Bucket exists, resize it instead
+                    success = self.bucket_manager.resize_bucket(name, percentage)
+                    if success:
+                        return f"✅ Resized existing bucket '{name}' to {percentage}%"
+                    else:
+                        return f"❌ Failed to resize bucket '{name}' - would exceed 100% total"
                 else:
-                    return f"❌ Failed to add bucket '{name}' - insufficient percentage available"
+                    # Bucket doesn't exist, add it
+                    success = self.bucket_manager.add_bucket(name, percentage, current_value)
+                    if success:
+                        return f"✅ Added bucket '{name}' with {percentage}% allocation"
+                    else:
+                        return f"❌ Failed to add bucket '{name}' - insufficient percentage available"
                     
             elif cmd_type == 'REMOVE_BUCKET':
                 name = args[0]

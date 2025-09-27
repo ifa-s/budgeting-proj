@@ -20,6 +20,7 @@ Normalization and rules:
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
 - When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
  - Do not emit commands for the implicit "free" bucket unless required to make an operation possible. Important: when you resize other buckets downward, the "free" bucket does NOT auto-increase; use `RESIZE_BUCKET free <new_percentage>` to claim slack before `ADD_BUCKET` if needed.
+- PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
 - "rebalance" => REBALANCE (set dollar amounts to match current percentages).
 - "make totals/percentages equal 100" => AUTO_RESIZE_TO_100.
 - "put/add/deposit $X to NAME" => ADD_AMOUNT name X.
@@ -163,8 +164,62 @@ Total percentage: 100.00%
 Percentage valid: True
 ============================================================
 OUTPUT:
-ADD_AMOUNT vacation 50
 SUBTRACT_AMOUNT groceries 20
+ADD_AMOUNT vacation 50
+
+
+USER_REQUEST: Adjust entertainment budget by $100.
+LLM_RESPONSE: I'll add 100 to savings. I'll reduce entertainment by $100 to help with budget management.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
+  Bucket(name='entertainment', percentage=15.00%, current_value=$450.00)
+  Bucket(name='vacation', percentage=10.00%, current_value=$300.00)
+  Bucket(name='free', percentage=55.00%, current_value=$1650.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+OUTPUT:
+SUBTRACT_AMOUNT entertainment 100
+ADD_AMOUNT savings 100
+
+USER_REQUEST: Change groceries to $500.
+LLM_RESPONSE: I'll adjust groceries to $500 by reducing the current amount.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
+  Bucket(name='entertainment', percentage=15.00%, current_value=$450.00)
+  Bucket(name='vacation', percentage=10.00%, current_value=$300.00)
+  Bucket(name='free', percentage=55.00%, current_value=$1650.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+OUTPUT:
+SUBTRACT_AMOUNT groceries 100
+
+USER_REQUEST: I need to free up some money from my budget.
+LLM_RESPONSE: I'll help you reduce spending by subtracting from your largest buckets.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='rent', percentage=40.00%, current_value=$1200.00)
+  Bucket(name='groceries', percentage=25.00%, current_value=$750.00)
+  Bucket(name='entertainment', percentage=20.00%, current_value=$600.00)
+  Bucket(name='savings', percentage=15.00%, current_value=$450.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+OUTPUT:
+SUBTRACT_AMOUNT entertainment 200
+SUBTRACT_AMOUNT groceries 100
 
 USER_REQUEST: Make the percentages add up to 100 and rebalance.
 LLM_RESPONSE: I'll normalize allocations to 100% and rebalance funds.
