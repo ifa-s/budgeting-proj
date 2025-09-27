@@ -12,31 +12,48 @@ except Exception as exc:  # pragma: no cover
 
 
 def main() -> int:
+    # Initialize frontend client
     try:
-        client = OpenRouterClient()
+        frontend = OpenRouterClient()
     except Exception as exc:  # pragma: no cover
-        print("Error initializing OpenRouterClient:", exc)
+        print("Error initializing Frontend OpenRouterClient:", exc)
         return 1
 
-    # Load system prompt from prompt.txt if present
-    prompt_path = Path(__file__).resolve().parent / "promptfrontend.txt"
+    # Initialize backend client
     try:
-        system_prompt = prompt_path.read_text(encoding="utf-8").strip()
+        backend = OpenRouterClient()
+    except Exception as exc:  # pragma: no cover
+        print("Error initializing Backend OpenRouterClient:", exc)
+        return 1
+
+    # Load frontend system prompt
+    frontend_prompt_path = Path(__file__).resolve().parent / "promptfrontend.txt"
+    try:
+        frontend_system_prompt = frontend_prompt_path.read_text(encoding="utf-8").strip()
     except FileNotFoundError:
-        system_prompt = "You are an expert financial advisor for a generation Z adult."
+        frontend_system_prompt = "You are an expert financial advisor for a generation Z adult."
+    
+    # Load backend system prompt
+    backend_prompt_path = Path(__file__).resolve().parent / "promptbackend.txt"
+    try:
+        backend_system_prompt = backend_prompt_path.read_text(encoding="utf-8").strip()
+    except FileNotFoundError:
+        backend_system_prompt = "You are the backend command planner for a budgeting app."
     
     print("Type your prompt and press Enter. Empty line to quit.\n")
-    messages: List[Dict[str, Any]] = [
-        {"role": "system", "content": system_prompt},
+    
+    # Initialize frontend conversation context
+    frontend_messages: List[Dict[str, Any]] = [
+        {"role": "system", "content": frontend_system_prompt},
     ]
     try:
-        reply = client.chat(messages=messages)
+        reply = frontend.chat(messages=frontend_messages)
     except Exception as exc:  # pragma: no cover
         print("Error from OpenRouter:", exc)
         return 1
     print(f"Assistant: {reply}\n")
     # Add assistant's first reply to context
-    messages.append({"role": "assistant", "content": reply})
+    frontend_messages.append({"role": "assistant", "content": reply})
 
     while True:
         try:
@@ -48,20 +65,33 @@ def main() -> int:
         if not user_text:
             break
 
-        # Add user message to context
-        messages.append({"role": "user", "content": user_text})
+        # Add user message to frontend context
+        frontend_messages.append({"role": "user", "content": user_text})
 
+        # Call frontend (financial advisor)
         try:
-            reply = client.chat(messages=messages)
+            frontend_reply = frontend.chat(messages=frontend_messages)
+            print(f"🎯 FRONTEND: {frontend_reply}\n")
         except Exception as exc:  # pragma: no cover
-            print("Error from OpenRouter:", exc)
+            print("Error from Frontend OpenRouter:", exc)
+            frontend_reply = ""
             # Remove the last user message if the request failed
-            messages.pop()
+            frontend_messages.pop()
             continue
-
-        print(f"Assistant: {reply}\n")
-        # Add assistant reply to context
-        messages.append({"role": "assistant", "content": reply})
+        
+        # Add frontend reply to context
+        frontend_messages.append({"role": "assistant", "content": frontend_reply})
+        
+        # Call backend (command planner) with frontend response
+        backend_messages: List[Dict[str, Any]] = [
+            {"role": "system", "content": backend_system_prompt},
+            {"role": "user", "content": f"USER_REQUEST: {user_text}\nLLM_RESPONSE: {frontend_reply}"},
+        ]
+        try:
+            backend_reply = backend.chat(messages=backend_messages)
+            print(f"⚙️ BACKEND: {backend_reply}\n")
+        except Exception as exc:  # pragma: no cover
+            print("Error from Backend OpenRouter:", exc)
 
     return 0
 
