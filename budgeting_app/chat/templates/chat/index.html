@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget AI Assistant</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-primary: #f7f7f8;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f9fafb;
+            --bg-quaternary: #f3f4f6;
+            --text-primary: #202123;
+            --text-secondary: #374151;
+            --text-tertiary: #6b7280;
+            --border-primary: #e5e5e5;
+            --border-secondary: #e5e7eb;
+            --border-tertiary: #d1d5db;
+            --accent-primary: #10a37f;
+            --accent-hover: #0f8b6b;
+            --user-message: #10a37f;
+            --assistant-bg: #ffffff;
+            --loading-bg: #ffffff;
+            --chart-grid: #f3f4f6;
+            --success-bg: #f0fdf4;
+            --success-border: #10a37f;
+            --success-text: #059669;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-text: #dc2626;
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #383838;
+            --bg-quaternary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #e5e5e5;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #404040;
+            --border-secondary: #525252;
+            --border-tertiary: #404040;
+            --accent-primary: #10a37f;
+            --accent-hover: #0d8f70;
+            --user-message: #10a37f;
+            --assistant-bg: #2d2d2d;
+            --loading-bg: #2d2d2d;
+            --chart-grid: #404040;
+            --success-bg: #0f2a1a;
+            --success-border: #10a37f;
+            --success-text: #4ade80;
+            --error-bg: #2d1717;
+            --error-border: #dc2626;
+            --error-text: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s ease;
+            z-index: 100;
+            position: relative;
+        }
+
+        .header h1 {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: all 0.3s ease;
+            font-size: 1.25rem;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--bg-quaternary);
+            border-color: var(--accent-primary);
+        }
+
+        .chat-sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            height: 100vh;
+            width: 300px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-primary);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            gap: 1rem;
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .new-chat-btn {
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--accent-hover);
+        }
+
+        .chat-sessions {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        .chat-session {
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .chat-session:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .chat-session.active {
+            background: var(--bg-tertiary);
+            border-left-color: var(--accent-primary);
+        }
+
+        .session-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .session-info {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .session-delete {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: all 0.3s ease;
+            opacity: 0;
+            font-size: 0.75rem;
+        }
+
+        .chat-session:hover .session-delete {
+            opacity: 1;
+        }
+
+        .session-delete:hover {
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .main-container {
+            transition: all 0.3s ease;
+        }
+
+        .main-container.sidebar-open {
+            margin-left: 300px;
+        }
+
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            transition: all 0.3s ease;
+            font-size: 1.25rem;
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-quaternary);
+            border-color: var(--accent-primary);
+        }
+
+        .status-display {
+            font-size: 0.875rem;
+            color: var(--text-tertiary);
+            background: var(--bg-quaternary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            max-width: 500px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            gap: 1rem;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 0 1rem;
+            height: calc(100vh - 140px); /* Subtract header + input heights */
+            overflow: hidden;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .charts-sidebar {
+            width: 400px;
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            transition: background-color 0.3s ease;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            /* Custom scrollbar styling for charts sidebar */
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-tertiary) var(--bg-tertiary);
+        }
+
+        .charts-sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .charts-sidebar::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .charts-sidebar::-webkit-scrollbar-thumb {
+            background: var(--border-tertiary);
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .charts-sidebar::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        .chart-container {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: background-color 0.3s ease;
+            overflow: visible; /* Allow chart to show tooltips outside container */
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        .chart-info {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        .chart-canvas {
+            position: relative;
+            min-height: 250px;
+            height: auto;
+            max-height: 400px; /* Limit maximum height */
+        }
+
+        .chart-canvas canvas {
+            max-height: 100%;
+            width: 100% !important;
+            height: auto !important;
+        }
+
+        .budget-stats {
+            background: var(--bg-quaternary);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-size: 0.875rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            color: var(--text-tertiary);
+            transition: color 0.3s ease;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: color 0.3s ease;
+        }
+
+        .recommendations-section {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .recommendations-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .recommendations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-secondary);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .recommendation-item:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 1px 3px rgba(16, 163, 127, 0.1);
+        }
+
+        .recommendation-item.completed {
+            background: var(--success-bg);
+            border-color: var(--success-border);
+        }
+
+        .recommendation-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-tertiary);
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 0.125rem;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item.completed .recommendation-checkbox {
+            background: var(--success-border);
+            border-color: var(--success-border);
+            color: white;
+        }
+
+        .recommendation-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .recommendation-text {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .recommendation-item.completed .recommendation-text {
+            color: var(--success-text);
+        }
+
+        .recommendation-category {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: color 0.3s ease;
+        }
+
+        .recommendation-priority {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 1rem;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .priority-high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .priority-medium {
+            background: #fffbeb;
+            color: #d97706;
+        }
+
+        .priority-low {
+            background: #f0f9ff;
+            color: #0284c7;
+        }
+
+        .empty-recommendations {
+            text-align: center;
+            color: var(--text-tertiary);
+            font-size: 0.875rem;
+            padding: 1.5rem;
+            font-style: italic;
+            transition: color 0.3s ease;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            scroll-behavior: smooth;
+            /* Custom scrollbar styling */
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-tertiary) var(--bg-tertiary);
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: var(--border-tertiary);
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 100%;
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #10a37f;
+            color: white;
+        }
+
+        .message.assistant .message-avatar {
+            background: #ab68ff;
+            color: white;
+        }
+
+        .message-content {
+            background: var(--assistant-bg);
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            max-width: 70%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .message.user .message-content {
+            background: var(--user-message);
+            color: white;
+        }
+
+        .input-container {
+            padding: 1rem 0 1rem 0;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-primary);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+        }
+
+        .input-wrapper {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        .message-input {
+            width: 100%;
+            padding: 1rem 3rem 1rem 1rem;
+            border: 1px solid var(--border-tertiary);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            transition: all 0.3s ease;
+            min-height: 52px;
+            max-height: 200px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .message-input:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .send-button {
+            position: absolute;
+            right: 1.5rem;
+            bottom: 0.75rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+
+        .send-button:disabled {
+            background: var(--border-tertiary);
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem 1.25rem;
+            background: var(--loading-bg);
+            border-radius: 1rem;
+            max-width: 70%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .loading-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: var(--text-tertiary);
+            border-radius: 50%;
+            animation: loading-pulse 1.5s infinite;
+            transition: background-color 0.3s ease;
+        }
+
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes loading-pulse {
+            0%, 60%, 100% {
+                opacity: 0.3;
+            }
+            30% {
+                opacity: 1;
+            }
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: var(--text-tertiary);
+            padding: 2rem;
+            max-width: 500px;
+            margin: 0 auto;
+            transition: color 0.3s ease;
+        }
+
+        .welcome-message h2 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            transition: all 0.3s ease;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+                height: calc(100vh - 160px); /* Adjusted for mobile */
+            }
+
+            .chat-container {
+                flex: 1;
+                min-height: 50%;
+                order: 2;
+            }
+
+            .charts-sidebar {
+                width: 100%;
+                order: 1;
+                height: auto;
+                max-height: 40vh;
+                flex-shrink: 0;
+            }
+
+            .chart-canvas {
+                min-height: 200px;
+                max-height: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .status-display {
+                display: none;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+
+            .main-content {
+                padding: 0 0.5rem;
+                height: calc(100vh - 140px); /* Adjusted for mobile header */
+            }
+
+            .input-wrapper {
+                padding: 0 0.5rem;
+            }
+
+            .charts-sidebar {
+                padding: 1rem;
+                gap: 1rem;
+                max-height: 40vh; /* Increased for better mobile viewing */
+            }
+
+            .chart-canvas {
+                min-height: 180px;
+                max-height: 300px;
+            }
+
+            .messages-container {
+                padding: 0.5rem;
+            }
+
+            /* Mobile sidebar adjustments */
+            .chat-sidebar {
+                width: 280px;
+            }
+
+            .main-container.sidebar-open {
+                margin-left: 0; /* Don't shift on mobile, use overlay instead */
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat Sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="chat-sidebar" id="chatSidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">💬 Chat Sessions</div>
+            <button class="new-chat-btn" id="newChatBtn">
+                <span>+</span>
+                <span>New</span>
+            </button>
+        </div>
+        <div class="chat-sessions" id="chatSessions">
+            <div class="chat-session active" data-session-id="current">
+                <div class="session-title">Current Budget Session</div>
+                <div class="session-info">
+                    <span>Active</span>
+                    <button class="session-delete" title="Delete session">🗑️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="main-container" id="mainContainer">
+        <div class="header">
+            <div class="header-left">
+                <button class="sidebar-toggle" id="sidebarToggle" title="Toggle chat sessions">
+                    ☰
+                </button>
+                <h1>💰 Budget AI Assistant</h1>
+            </div>
+            <div class="header-controls">
+                <div class="status-display" id="statusDisplay">
+                    Ready to help with your budget
+                </div>
+                <button class="theme-toggle" id="themeToggle" title="Toggle dark/light theme">
+                    🌙
+                </button>
+                <button class="theme-toggle" id="debugButton" title="Debug charts" style="margin-left: 0.5rem;">
+                    🔧
+                </button>
+            </div>
+        </div>
+
+    <div class="main-content">
+        <div class="chat-container">
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <h2>Welcome to your Budget AI Assistant!</h2>
+                    <p>I'm here to help you manage your budget, create spending buckets, and track your financial goals. Just start by telling me about your income or financial situation!</p>
+                </div>
+            </div>
+
+            <div class="loading message assistant" id="loadingIndicator">
+                <div class="message-avatar">AI</div>
+                <div class="loading">
+                    <span>Thinking</span>
+                    <div class="loading-dots">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="charts-sidebar">
+            <div class="chart-container">
+                <div class="chart-title">Budget Allocation</div>
+                <div class="chart-info" id="chartInfo" style="display: none;">
+                    Scroll in this area to see all categories
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="budgetChart" width="300" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Spending Timeline</div>
+                <div class="chart-canvas">
+                    <canvas id="spendingChart" width="300" height="250"></canvas>
+                </div>
+            </div>
+
+            <div class="budget-stats" id="budgetStats">
+                <div class="stat-row">
+                    <span class="stat-label">Total Budget:</span>
+                    <span class="stat-value" id="totalBudget">$0.00</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Allocated:</span>
+                    <span class="stat-value" id="totalAllocated">0%</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Buckets:</span>
+                    <span class="stat-value" id="bucketCount">0</span>
+                </div>
+            </div>
+
+            <div class="recommendations-section">
+                <div class="recommendations-title">
+                    <span>💡</span>
+                    <span>Smart Recommendations</span>
+                </div>
+                <div class="recommendations-list" id="recommendationsList">
+                    <div class="empty-recommendations" id="emptyRecommendations">
+                        Chat with the AI to get personalized budget recommendations!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Tell me about your budget, income, or ask me to create spending buckets..."
+                    rows="1"></textarea>
+                <button id="sendButton" class="send-button">Send</button>
+            </div>
+        </div>
+    </div> <!-- Close main-container -->
+
+    <script>
+        class BudgetChat {
+            constructor() {
+                this.messagesContainer = document.getElementById('messagesContainer');
+                this.messageInput = document.getElementById('messageInput');
+                this.sendButton = document.getElementById('sendButton');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+                this.statusDisplay = document.getElementById('statusDisplay');
+                
+                this.isLoading = false;
+                this.hasStarted = false;
+                
+                // Chart instances
+                this.budgetChart = null;
+                this.spendingChart = null;
+                this.spendingData = [];
+                
+                // Recommendations
+                this.recommendations = new Map();
+                this.recommendationsList = document.getElementById('recommendationsList');
+                this.emptyRecommendations = document.getElementById('emptyRecommendations');
+                
+                // Theme management
+                this.themeToggle = document.getElementById('themeToggle');
+                this.currentTheme = localStorage.getItem('budget-theme') || 'light';
+                
+                // Debug button
+                this.debugButton = document.getElementById('debugButton');
+                
+                // Sidebar elements
+                this.sidebarToggle = document.getElementById('sidebarToggle');
+                this.chatSidebar = document.getElementById('chatSidebar');
+                this.sidebarOverlay = document.getElementById('sidebarOverlay');
+                this.mainContainer = document.getElementById('mainContainer');
+                this.newChatBtn = document.getElementById('newChatBtn');
+                this.chatSessions = document.getElementById('chatSessions');
+                
+                // Session management
+                this.currentSessionId = 'current';
+                this.sessions = new Map();
+                this.sessions.set('current', {
+                    id: 'current',
+                    title: 'Current Budget Session',
+                    messages: [],
+                    timestamp: Date.now()
+                });
+                
+                this.init();
+            }
+            
+            init() {
+                this.sendButton.addEventListener('click', () => this.handleSend());
+                this.messageInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.handleSend();
+                    }
+                });
+                
+                // Auto-resize textarea
+                this.messageInput.addEventListener('input', () => {
+                    this.messageInput.style.height = 'auto';
+                    this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
+                });
+                
+                // Initialize theme
+                this.initializeTheme();
+                
+                // Initialize debug button
+                this.debugButton.addEventListener('click', () => this.debugCharts());
+                
+                // Initialize sidebar
+                this.initializeSidebar();
+                
+                // Initialize charts
+                this.initializeCharts();
+                
+                // Handle window resize for chart responsiveness
+                window.addEventListener('resize', () => {
+                    setTimeout(() => {
+                        if (this.budgetChart) {
+                            this.budgetChart.resize();
+                        }
+                        if (this.spendingChart) {
+                            this.spendingChart.resize();
+                        }
+                    }, 100);
+                });
+                
+                // Start conversation
+                this.startConversation();
+            }
+            
+            debugCharts() {
+                console.log('=== MANUAL CHART DEBUG ===');
+                
+                // Fetch current status
+                fetch('/status/')
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Status response:', data);
+                        if (data.success) {
+                            this.updateCharts(data.bucket_summary, data.bucket_data);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Debug fetch error:', error);
+                    });
+                    
+                // Test with dummy data
+                const testData = {
+                    buckets: [
+                        { name: 'test_rent', percentage: 50, current: 1500, max: 1500 },
+                        { name: 'test_food', percentage: 30, current: 900, max: 900 }
+                    ],
+                    total_budget: 3000,
+                    total_percentage: 80
+                };
+                
+                console.log('Testing with dummy data:', testData);
+                this.updateCharts('Test', testData);
+            }
+            
+            initializeSidebar() {
+                // Sidebar toggle
+                this.sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+                
+                // Close sidebar when clicking overlay
+                this.sidebarOverlay.addEventListener('click', () => this.closeSidebar());
+                
+                // New chat button
+                this.newChatBtn.addEventListener('click', () => this.createNewChat());
+                
+                // Close sidebar on escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.chatSidebar.classList.contains('open')) {
+                        this.closeSidebar();
+                    }
+                });
+            }
+            
+            toggleSidebar() {
+                const isOpen = this.chatSidebar.classList.contains('open');
+                if (isOpen) {
+                    this.closeSidebar();
+                } else {
+                    this.openSidebar();
+                }
+            }
+            
+            openSidebar() {
+                this.chatSidebar.classList.add('open');
+                this.sidebarOverlay.classList.add('show');
+                
+                // On desktop, shift main content
+                if (window.innerWidth > 768) {
+                    this.mainContainer.classList.add('sidebar-open');
+                }
+            }
+            
+            closeSidebar() {
+                this.chatSidebar.classList.remove('open');
+                this.sidebarOverlay.classList.remove('show');
+                this.mainContainer.classList.remove('sidebar-open');
+            }
+            
+            createNewChat() {
+                const sessionId = 'session_' + Date.now();
+                const session = {
+                    id: sessionId,
+                    title: 'New Budget Session',
+                    messages: [],
+                    timestamp: Date.now()
+                };
+                
+                this.sessions.set(sessionId, session);
+                this.switchToSession(sessionId);
+                this.updateSessionsList();
+                this.closeSidebar();
+                
+                // Clear current chat
+                this.messagesContainer.innerHTML = `
+                    <div class="welcome-message">
+                        <h2>Welcome to your new Budget AI Assistant session!</h2>
+                        <p>I'm here to help you manage your budget, create spending buckets, and track your financial goals. Just start by telling me about your income or financial situation!</p>
+                    </div>
+                `;
+                
+                // Reset charts
+                this.updateCharts('', { buckets: [], total_budget: 0, total_percentage: 0 });
+            }
+            
+            switchToSession(sessionId) {
+                // Save current session messages
+                this.saveCurrentSession();
+                
+                // Switch to new session
+                this.currentSessionId = sessionId;
+                
+                // Load session messages
+                this.loadSession(sessionId);
+                
+                // Update active session in sidebar
+                this.updateSessionsList();
+            }
+            
+            saveCurrentSession() {
+                const currentSession = this.sessions.get(this.currentSessionId);
+                if (currentSession) {
+                    // Save current messages (simplified - in a real app you'd save the full state)
+                    const messages = Array.from(this.messagesContainer.children).map(msg => ({
+                        type: msg.className.includes('message') ? 'message' : 'other',
+                        content: msg.innerHTML
+                    }));
+                    currentSession.messages = messages;
+                }
+            }
+            
+            loadSession(sessionId) {
+                const session = this.sessions.get(sessionId);
+                if (session && session.messages.length > 0) {
+                    // Load saved messages
+                    this.messagesContainer.innerHTML = '';
+                    session.messages.forEach(msg => {
+                        const div = document.createElement('div');
+                        div.innerHTML = msg.content;
+                        this.messagesContainer.appendChild(div);
+                    });
+                } else {
+                    // Show welcome message for new session
+                    this.messagesContainer.innerHTML = `
+                        <div class="welcome-message">
+                            <h2>Welcome to your Budget AI Assistant!</h2>
+                            <p>I'm here to help you manage your budget, create spending buckets, and track your financial goals. Just start by telling me about your income or financial situation!</p>
+                        </div>
+                    `;
+                }
+                this.scrollToBottom();
+            }
+            
+            updateSessionsList() {
+                this.chatSessions.innerHTML = '';
+                
+                // Sort sessions by timestamp (most recent first)
+                const sortedSessions = Array.from(this.sessions.values())
+                    .sort((a, b) => b.timestamp - a.timestamp);
+                
+                sortedSessions.forEach(session => {
+                    const sessionElement = document.createElement('div');
+                    sessionElement.className = `chat-session ${session.id === this.currentSessionId ? 'active' : ''}`;
+                    sessionElement.setAttribute('data-session-id', session.id);
+                    
+                    const timeAgo = this.getTimeAgo(session.timestamp);
+                    
+                    sessionElement.innerHTML = `
+                        <div class="session-title">${session.title}</div>
+                        <div class="session-info">
+                            <span>${session.id === this.currentSessionId ? 'Active' : timeAgo}</span>
+                            ${session.id !== 'current' ? '<button class="session-delete" title="Delete session">🗑️</button>' : ''}
+                        </div>
+                    `;
+                    
+                    // Add click listener to switch sessions
+                    sessionElement.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('session-delete')) {
+                            this.switchToSession(session.id);
+                        }
+                    });
+                    
+                    // Add delete listener
+                    const deleteBtn = sessionElement.querySelector('.session-delete');
+                    if (deleteBtn) {
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.deleteSession(session.id);
+                        });
+                    }
+                    
+                    this.chatSessions.appendChild(sessionElement);
+                });
+            }
+            
+            deleteSession(sessionId) {
+                if (sessionId === 'current') return; // Can't delete main session
+                
+                this.sessions.delete(sessionId);
+                
+                // If deleting current session, switch to main
+                if (sessionId === this.currentSessionId) {
+                    this.switchToSession('current');
+                }
+                
+                this.updateSessionsList();
+            }
+            
+            getTimeAgo(timestamp) {
+                const now = Date.now();
+                const diff = now - timestamp;
+                const minutes = Math.floor(diff / 60000);
+                const hours = Math.floor(diff / 3600000);
+                const days = Math.floor(diff / 86400000);
+                
+                if (minutes < 1) return 'Just now';
+                if (minutes < 60) return `${minutes}m ago`;
+                if (hours < 24) return `${hours}h ago`;
+                return `${days}d ago`;
+            }
+            
+            initializeTheme() {
+                // Apply stored theme
+                this.applyTheme(this.currentTheme);
+                
+                // Add theme toggle event listener
+                this.themeToggle.addEventListener('click', () => this.toggleTheme());
+            }
+            
+            applyTheme(theme) {
+                this.currentTheme = theme;
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                // Update theme toggle icon
+                this.themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+                this.themeToggle.title = `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`;
+                
+                // Store theme preference
+                localStorage.setItem('budget-theme', theme);
+                
+                // Update charts if they exist
+                if (this.budgetChart || this.spendingChart) {
+                    this.updateChartTheme();
+                }
+            }
+            
+            toggleTheme() {
+                const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark';
+                this.applyTheme(newTheme);
+            }
+            
+            updateChartTheme() {
+                const isDark = this.currentTheme === 'dark';
+                const gridColor = isDark ? '#404040' : '#f3f4f6';
+                const textColor = isDark ? '#e5e5e5' : '#374151';
+                
+                // Update budget chart
+                if (this.budgetChart) {
+                    this.budgetChart.options.plugins.legend.labels.color = textColor;
+                    this.budgetChart.update();
+                }
+                
+                // Update spending chart
+                if (this.spendingChart) {
+                    this.spendingChart.options.plugins.legend.labels.color = textColor;
+                    this.spendingChart.options.scales.x.grid.color = gridColor;
+                    this.spendingChart.options.scales.y.grid.color = gridColor;
+                    this.spendingChart.options.scales.x.ticks.color = textColor;
+                    this.spendingChart.options.scales.y.ticks.color = textColor;
+                    this.spendingChart.update();
+                }
+            }
+            
+            initializeCharts() {
+                // Initialize Budget Allocation Chart (Pie Chart)
+                const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+                this.budgetChart = new Chart(budgetCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Unallocated'],
+                        datasets: [{
+                            data: [100],
+                            backgroundColor: ['#e5e7eb'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: {
+                                bottom: 20
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                align: 'start',
+                                labels: {
+                                    padding: 8,
+                                    font: { size: 10 },
+                                    color: this.currentTheme === 'dark' ? '#e5e5e5' : '#374151',
+                                    boxWidth: 12,
+                                    boxHeight: 12,
+                                    usePointStyle: true,
+                                    pointStyle: 'circle'
+                                },
+                                maxHeight: 120,
+                                onClick: null // Disable legend clicking to prevent chart issues
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed;
+                                        return `${label}: ${value.toFixed(1)}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                // Initialize Spending Timeline Chart (Line Chart)
+                const spendingCtx = document.getElementById('spendingChart').getContext('2d');
+                this.spendingChart = new Chart(spendingCtx, {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Budget Changes',
+                            data: [],
+                            borderColor: '#10a37f',
+                            backgroundColor: 'rgba(16, 163, 127, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 11 },
+                                    color: this.currentTheme === 'dark' ? '#e5e5e5' : '#374151'
+                                }
+                            }
+                        },
+                            scales: {
+                                x: {
+                                    display: true,
+                                    grid: { display: false },
+                                    ticks: { color: this.currentTheme === 'dark' ? '#e5e5e5' : '#374151' }
+                                },
+                                y: {
+                                    display: true,
+                                    beginAtZero: true,
+                                    grid: { color: this.currentTheme === 'dark' ? '#404040' : '#f3f4f6' },
+                                    ticks: { color: this.currentTheme === 'dark' ? '#e5e5e5' : '#374151' }
+                                }
+                            }
+                    }
+                });
+            }
+            
+            updateCharts(bucketSummary, bucketData = null) {
+                // Enhanced debugging for chart updates
+                console.log('=== CHART UPDATE DEBUG ===');
+                console.log('Bucket Summary:', bucketSummary);
+                console.log('Bucket Data:', bucketData);
+                console.log('Has Detailed Data:', !!(bucketData && bucketData.buckets));
+                if (bucketData && bucketData.debug) {
+                    console.log('Backend Debug Info:', bucketData.debug);
+                }
+                console.log('=========================');
+                
+                // Parse bucket summary for fallback: "Budget=$1000.00 | Total%=85.00 | Buckets=[rent, food, entertainment]"
+                const budgetMatch = bucketSummary ? bucketSummary.match(/Budget=\$?([\d,]+\.?\d*)/) : null;
+                const percentMatch = bucketSummary ? bucketSummary.match(/Total%=([\d.]+)/) : null;
+                const bucketsMatch = bucketSummary ? bucketSummary.match(/Buckets=\[([^\]]*)\]/) : null;
+                
+                let totalBudget, totalPercent, buckets;
+                
+                // Use detailed bucket data if available, otherwise parse summary
+                if (bucketData && bucketData.buckets && bucketData.buckets.length > 0) {
+                    totalBudget = bucketData.total_budget || 0;
+                    totalPercent = bucketData.total_percentage || 0;
+                    buckets = bucketData.buckets;
+                    
+                    // Using real bucket data from backend
+                } else {
+                    // Fallback to parsing summary string
+                    totalBudget = budgetMatch ? parseFloat(budgetMatch[1].replace(',', '')) : 0;
+                    totalPercent = percentMatch ? parseFloat(percentMatch[1]) : 0;
+                    const bucketNames = bucketsMatch ? bucketsMatch[1].split(',').map(b => b.trim()).filter(b => b && b !== 'free') : [];
+                    
+                    // Create simple bucket objects for string-based data
+                    buckets = bucketNames.map(name => ({
+                        name: name,
+                        percentage: bucketNames.length > 0 ? totalPercent / bucketNames.length : 0,
+                        current: 0,
+                        max: 0
+                    }));
+                    
+                    // Using fallback parsed data
+                }
+                
+                // Update stats display
+                document.getElementById('totalBudget').textContent = `$${totalBudget.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+                document.getElementById('totalAllocated').textContent = `${totalPercent.toFixed(1)}%`;
+                document.getElementById('bucketCount').textContent = Array.isArray(buckets) ? buckets.length.toString() : '0';
+                
+                // Update budget allocation chart
+                this.updateBudgetChart(buckets, totalPercent, totalBudget);
+                
+                // Update spending timeline
+                this.updateSpendingTimeline(totalBudget);
+            }
+            
+            updateBudgetChart(buckets, totalPercent, totalBudget) {
+                const colors = [
+                    '#10a37f', '#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', 
+                    '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+                ];
+                
+                console.log('=== BUDGET CHART UPDATE ===');
+                console.log('Input - Buckets:', buckets);
+                console.log('Input - Total Percent:', totalPercent);
+                console.log('Input - Total Budget:', totalBudget);
+                
+                if (!buckets || buckets.length === 0) {
+                    // Show unallocated if no buckets exist
+                    this.budgetChart.data.labels = ['Unallocated'];
+                    this.budgetChart.data.datasets[0].data = [100];
+                    this.budgetChart.data.datasets[0].backgroundColor = [this.currentTheme === 'dark' ? '#525252' : '#e5e7eb'];
+                } else {
+                    const labels = [];
+                    const data = [];
+                    const backgroundColors = [];
+                    let allocatedPercent = 0;
+                    
+                    // Process each bucket with actual percentage data
+                    buckets.forEach((bucket, i) => {
+                        const bucketName = bucket.name || `Bucket ${i+1}`;
+                        const bucketPercentage = bucket.percentage || 0;
+                        
+                        // Skip buckets with 0% allocation
+                        if (bucketPercentage > 0) {
+                            labels.push(bucketName);
+                            data.push(bucketPercentage);
+                            backgroundColors.push(colors[i % colors.length]);
+                            allocatedPercent += bucketPercentage;
+                        }
+                    });
+                    
+                    // Add unallocated portion if there's remaining budget
+                    const unallocated = Math.max(0, 100 - allocatedPercent);
+                    if (unallocated > 0.1) { // Only show if more than 0.1%
+                        labels.push('Unallocated');
+                        data.push(unallocated);
+                        backgroundColors.push(this.currentTheme === 'dark' ? '#525252' : '#e5e7eb');
+                    }
+                    
+                    console.log('=== FINAL CHART DATA ===');
+                    console.log('Labels:', labels);
+                    console.log('Data:', data);
+                    console.log('Colors:', backgroundColors);
+                    console.log('Allocated Percent:', allocatedPercent);
+                    console.log('Unallocated:', unallocated);
+                    console.log('=======================');
+                    
+                    this.budgetChart.data.labels = labels;
+                    this.budgetChart.data.datasets[0].data = data;
+                    this.budgetChart.data.datasets[0].backgroundColor = backgroundColors;
+                    
+                    // Show scroll info if there are many categories
+                    const chartInfo = document.getElementById('chartInfo');
+                    if (labels.length > 7) {
+                        chartInfo.style.display = 'block';
+                        
+                        // Adjust chart container height for better legend visibility
+                        const chartCanvas = this.budgetChart.canvas.parentElement;
+                        chartCanvas.style.minHeight = '300px';
+                        chartCanvas.style.maxHeight = '450px';
+                    } else {
+                        chartInfo.style.display = 'none';
+                        
+                        // Reset to normal height
+                        const chartCanvas = this.budgetChart.canvas.parentElement;
+                        chartCanvas.style.minHeight = '250px';
+                        chartCanvas.style.maxHeight = '400px';
+                    }
+                }
+                
+                // Force chart update with animation
+                this.budgetChart.update('active');
+                console.log('[DEBUG] Chart updated with data:', {
+                    labels: this.budgetChart.data.labels,
+                    data: this.budgetChart.data.datasets[0].data
+                });
+            }
+            
+            updateSpendingTimeline(currentBudget) {
+                const now = new Date();
+                const timeLabel = now.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                this.spendingData.push({
+                    time: timeLabel,
+                    budget: currentBudget
+                });
+                
+                // Keep only last 10 data points
+                if (this.spendingData.length > 10) {
+                    this.spendingData.shift();
+                }
+                
+                this.spendingChart.data.labels = this.spendingData.map(d => d.time);
+                this.spendingChart.data.datasets[0].data = this.spendingData.map(d => d.budget);
+                this.spendingChart.update();
+            }
+            
+            generateRecommendations(bucketData, frontendResponse, backendRecommendations = []) {
+                const newRecommendations = [];
+                
+                // Add backend-generated recommendations first
+                if (backendRecommendations && Array.isArray(backendRecommendations)) {
+                    backendRecommendations.forEach(rec => {
+                        newRecommendations.push({
+                            ...rec,
+                            source: 'backend'
+                        });
+                    });
+                }
+                
+                // Analyze budget data for recommendations
+                if (bucketData && bucketData.buckets) {
+                    const totalBudget = bucketData.total_budget || 0;
+                    const totalPercent = bucketData.total_percentage || 0;
+                    const buckets = bucketData.buckets || [];
+                    
+                    // Over-allocation warning
+                    if (totalPercent > 100) {
+                        newRecommendations.push({
+                            id: 'over_allocated',
+                            text: `You've allocated ${totalPercent.toFixed(1)}% of your budget. Consider reducing some buckets.`,
+                            category: 'Budget Balance',
+                            priority: 'high',
+                            type: 'warning',
+                            source: 'frontend'
+                        });
+                    }
+                    
+                    // Under-allocation suggestion
+                    if (totalPercent < 90 && buckets.length > 0) {
+                        const remaining = 100 - totalPercent;
+                        newRecommendations.push({
+                            id: 'under_allocated',
+                            text: `You have ${remaining.toFixed(1)}% unallocated. Consider adding an emergency fund or savings bucket.`,
+                            category: 'Optimization',
+                            priority: 'medium',
+                            type: 'suggestion',
+                            source: 'frontend'
+                        });
+                    }
+                    
+                    // Emergency fund recommendation
+                    const hasEmergencyFund = buckets.some(bucket => 
+                        bucket.name.toLowerCase().includes('emergency') || 
+                        bucket.name.toLowerCase().includes('savings')
+                    );
+                    
+                    if (!hasEmergencyFund && buckets.length >= 2) {
+                        newRecommendations.push({
+                            id: 'emergency_fund',
+                            text: 'Create an emergency fund bucket with 3-6 months of expenses for financial security.',
+                            category: 'Safety Net',
+                            priority: 'high',
+                            type: 'action',
+                            source: 'frontend'
+                        });
+                    }
+                    
+                    // 50/30/20 rule suggestion
+                    if (buckets.length >= 3 && totalBudget > 0) {
+                        newRecommendations.push({
+                            id: 'fifty_thirty_twenty',
+                            text: 'Consider the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment.',
+                            category: 'Best Practice',
+                            priority: 'low',
+                            type: 'tip',
+                            source: 'frontend'
+                        });
+                    }
+                }
+                
+                // Analyze AI response for contextual recommendations
+                if (frontendResponse) {
+                    const response = frontendResponse.toLowerCase();
+                    
+                    // Debt mention
+                    if (response.includes('debt') || response.includes('loan') || response.includes('credit')) {
+                        newRecommendations.push({
+                            id: 'debt_payoff',
+                            text: 'Prioritize high-interest debt payments to save money on interest over time.',
+                            category: 'Debt Management',
+                            priority: 'high',
+                            type: 'action',
+                            source: 'frontend'
+                        });
+                    }
+                    
+                    // Investment mention
+                    if (response.includes('invest') || response.includes('retirement') || response.includes('401k')) {
+                        newRecommendations.push({
+                            id: 'investment_automation',
+                            text: 'Set up automatic investments to take advantage of dollar-cost averaging.',
+                            category: 'Investment',
+                            priority: 'medium',
+                            type: 'tip',
+                            source: 'frontend'
+                        });
+                    }
+                    
+                    // Subscription mention
+                    if (response.includes('subscription') || response.includes('streaming') || response.includes('monthly')) {
+                        newRecommendations.push({
+                            id: 'subscription_audit',
+                            text: 'Review and cancel unused subscriptions to free up budget space.',
+                            category: 'Cost Cutting',
+                            priority: 'medium',
+                            type: 'action',
+                            source: 'frontend'
+                        });
+                    }
+                }
+                
+                // Add new recommendations
+                newRecommendations.forEach(rec => {
+                    if (!this.recommendations.has(rec.id)) {
+                        this.recommendations.set(rec.id, {
+                            ...rec,
+                            completed: false,
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+                
+                this.updateRecommendationsDisplay();
+            }
+            
+            updateRecommendationsDisplay() {
+                const recArray = Array.from(this.recommendations.values())
+                    .sort((a, b) => {
+                        // Sort by priority (high, medium, low) then by timestamp
+                        const priorityOrder = { high: 0, medium: 1, low: 2 };
+                        const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
+                        return priorityDiff !== 0 ? priorityDiff : b.timestamp - a.timestamp;
+                    });
+                
+                if (recArray.length === 0) {
+                    this.emptyRecommendations.style.display = 'block';
+                    this.recommendationsList.innerHTML = '';
+                    this.recommendationsList.appendChild(this.emptyRecommendations);
+                    return;
+                }
+                
+                this.emptyRecommendations.style.display = 'none';
+                this.recommendationsList.innerHTML = '';
+                
+                recArray.forEach(rec => {
+                    const recElement = this.createRecommendationElement(rec);
+                    this.recommendationsList.appendChild(recElement);
+                });
+            }
+            
+            createRecommendationElement(rec) {
+                const element = document.createElement('div');
+                element.className = `recommendation-item ${rec.completed ? 'completed' : ''}`;
+                element.onclick = () => this.toggleRecommendation(rec.id);
+                
+                element.innerHTML = `
+                    <div class="recommendation-checkbox">
+                        ${rec.completed ? '✓' : ''}
+                    </div>
+                    <div class="recommendation-content">
+                        <div class="recommendation-text">${rec.text}</div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+                            <span class="recommendation-category">${rec.category}</span>
+                            <span class="recommendation-priority priority-${rec.priority}">${rec.priority}</span>
+                        </div>
+                    </div>
+                `;
+                
+                return element;
+            }
+            
+            toggleRecommendation(id) {
+                const rec = this.recommendations.get(id);
+                if (rec) {
+                    rec.completed = !rec.completed;
+                    this.updateRecommendationsDisplay();
+                }
+            }
+            
+            async startConversation() {
+                if (this.hasStarted) return;
+                
+                try {
+                    const response = await fetch('/start/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Remove welcome message
+                        const welcomeMessage = this.messagesContainer.querySelector('.welcome-message');
+                        if (welcomeMessage) {
+                            welcomeMessage.remove();
+                        }
+                        
+                        this.addMessage('assistant', data.message);
+                        this.hasStarted = true;
+                    } else {
+                        this.showError('Failed to start conversation: ' + data.error);
+                    }
+                } catch (error) {
+                    this.showError('Failed to connect to the server. Please check your connection.');
+                    console.error('Error starting conversation:', error);
+                }
+            }
+            
+            async handleSend() {
+                const message = this.messageInput.value.trim();
+                if (!message || this.isLoading) return;
+                
+                this.addMessage('user', message);
+                this.messageInput.value = '';
+                this.messageInput.style.height = 'auto';
+                
+                await this.sendMessage(message);
+            }
+            
+            async sendMessage(message) {
+                this.setLoading(true);
+                
+                try {
+                    const response = await fetch('/send/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.addMessage('assistant', data.frontend_response);
+                        this.updateStatus(data.bucket_summary);
+                        this.updateCharts(data.bucket_summary, data.bucket_data);
+                        
+                        // Generate smart recommendations based on the interaction
+                        this.generateRecommendations(data.bucket_data, data.frontend_response, data.recommendations);
+                        
+                        // If there are commands, show them as well
+                        if (data.commands && data.commands.trim()) {
+                            this.addMessage('assistant', `System: ${data.commands}`, 'system');
+                        }
+                    } else {
+                        this.showError('Error: ' + data.error);
+                    }
+                } catch (error) {
+                    this.showError('Failed to send message. Please try again.');
+                    console.error('Error sending message:', error);
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            addMessage(sender, content, type = 'normal') {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}`;
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = sender === 'user' ? 'You' : 'AI';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.textContent = content;
+                
+                if (type === 'system') {
+                    contentDiv.style.background = '#f3f4f6';
+                    contentDiv.style.color = '#374151';
+                    contentDiv.style.fontSize = '0.875rem';
+                }
+                
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(contentDiv);
+                
+                this.messagesContainer.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+            
+            setLoading(loading) {
+                this.isLoading = loading;
+                this.sendButton.disabled = loading;
+                this.loadingIndicator.style.display = loading ? 'flex' : 'none';
+                
+                if (loading) {
+                    this.scrollToBottom();
+                }
+            }
+            
+            updateStatus(status) {
+                if (status) {
+                    this.statusDisplay.textContent = status;
+                }
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                
+                this.messagesContainer.appendChild(errorDiv);
+                this.scrollToBottom();
+                
+                // Remove error message after 5 seconds
+                setTimeout(() => {
+                    if (errorDiv.parentNode) {
+                        errorDiv.parentNode.removeChild(errorDiv);
+                    }
+                }, 5000);
+            }
+            
+            scrollToBottom() {
+                setTimeout(() => {
+                    this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+                }, 50);
+            }
+        }
+        
+        // Initialize the chat when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new BudgetChat();
+        });
+    </script>
+</body>
+</html>
