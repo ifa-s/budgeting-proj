@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget Export Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-primary: #f7f7f8;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #f9fafb;
+            --bg-quaternary: #f3f4f6;
+            --text-primary: #202123;
+            --text-secondary: #374151;
+            --text-tertiary: #6b7280;
+            --border-primary: #e5e5e5;
+            --border-secondary: #e5e7eb;
+            --border-tertiary: #d1d5db;
+            --accent-primary: #10a37f;
+            --accent-hover: #0f8b6b;
+            --success-bg: #f0fdf4;
+            --success-border: #10a37f;
+            --success-text: #059669;
+            --warning-bg: #fffbeb;
+            --warning-border: #f59e0b;
+            --warning-text: #d97706;
+            --error-bg: #fef2f2;
+            --error-border: #fecaca;
+            --error-text: #dc2626;
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --bg-tertiary: #383838;
+            --bg-quaternary: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #e5e5e5;
+            --text-tertiary: #a1a1aa;
+            --border-primary: #404040;
+            --border-secondary: #525252;
+            --border-tertiary: #404040;
+            --accent-primary: #10a37f;
+            --accent-hover: #0d8f70;
+            --success-bg: #0f2a1a;
+            --success-border: #10a37f;
+            --success-text: #4ade80;
+            --warning-bg: #2d1f0a;
+            --warning-border: #f59e0b;
+            --warning-text: #fbbf24;
+            --error-bg: #2d1717;
+            --error-border: #dc2626;
+            --error-text: #f87171;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .export-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .export-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+        }
+
+        .export-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .export-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .export-timestamp {
+            font-size: 0.9rem;
+            color: var(--text-tertiary);
+            background: var(--bg-tertiary);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            display: inline-block;
+        }
+
+        .export-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-section {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1rem;
+        }
+
+        .chart-container canvas {
+            max-height: 100%;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .buckets-section {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+            margin-bottom: 3rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .buckets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .bucket-card {
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-secondary);
+            transition: all 0.3s ease;
+        }
+
+        .bucket-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 4px 12px rgba(16, 163, 127, 0.15);
+        }
+
+        .bucket-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .bucket-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .bucket-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+        }
+
+        .bucket-amount {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .bucket-progress {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-quaternary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .bucket-progress-bar {
+            height: 100%;
+            background: var(--accent-primary);
+            transition: width 0.3s ease;
+        }
+
+        .legend-section {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+            margin-bottom: 3rem;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-secondary);
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .legend-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .insights-section {
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-primary);
+            margin-bottom: 3rem;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.75rem;
+            border: 1px solid var(--border-secondary);
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .insight-content {
+            flex: 1;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .insight-description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .print-button:hover {
+            background: var(--accent-hover);
+        }
+
+        .error-message {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        @media print {
+            .print-button {
+                display: none;
+            }
+            
+            .export-container {
+                max-width: none;
+                padding: 1rem;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .export-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .buckets-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">🖨️ Print Report</button>
+    
+    <div class="export-container">
+        <div class="export-header">
+            <h1 class="export-title">💰 Budget Export Report</h1>
+            <p class="export-subtitle">Comprehensive overview of your budget allocation and financial insights</p>
+            <div class="export-timestamp">Generated on {{ export_timestamp }}</div>
+        </div>
+
+        {% if error %}
+            <div class="error-message">
+                <h2>Export Error</h2>
+                <p>There was an error generating your budget report: {{ error }}</p>
+            </div>
+        {% else %}
+            <!-- Key Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">${{ total_budget|floatformat:2 }}</div>
+                    <div class="stat-label">Total Budget</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_percentage|floatformat:1 }}%</div>
+                    <div class="stat-label">Allocated</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ bucket_count }}</div>
+                    <div class="stat-label">Budget Buckets</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ unallocated_amount|floatformat:2 }}</div>
+                    <div class="stat-label">Unallocated</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="export-content">
+                <div class="chart-section">
+                    <h2 class="chart-title">Budget Allocation Chart</h2>
+                    <div class="chart-container">
+                        <canvas id="budgetChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h2 class="chart-title">Budget Distribution</h2>
+                    <div class="chart-container">
+                        <canvas id="distributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budget Buckets -->
+            <div class="buckets-section">
+                <h2 class="section-title">Budget Buckets Breakdown</h2>
+                <div class="buckets-grid">
+                    {% for bucket in buckets %}
+                    <div class="bucket-card">
+                        <div class="bucket-name">{{ bucket.name|title }}</div>
+                        <div class="bucket-details">
+                            <span class="bucket-percentage">{{ bucket.percentage|floatformat:1 }}%</span>
+                            <span class="bucket-amount">${{ bucket.current|floatformat:2 }}</span>
+                        </div>
+                        <div class="bucket-progress">
+                            <div class="bucket-progress-bar" data-width="{{ bucket.percentage|default:0 }}"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="bucket-card">
+                        <div class="bucket-name">No Budget Buckets</div>
+                        <div class="bucket-details">
+                            <span class="bucket-percentage">0%</span>
+                            <span class="bucket-amount">$0.00</span>
+                        </div>
+                        <div class="bucket-progress">
+                            <div class="bucket-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Legend Section -->
+            <div class="legend-section">
+                <h2 class="section-title">Chart Legend & Information</h2>
+                <div class="legend-grid">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #10a37f;"></div>
+                        <div class="legend-text">
+                            <strong>Budget Allocation:</strong> Shows how your total budget is distributed across different categories
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #3b82f6;"></div>
+                        <div class="legend-text">
+                            <strong>Percentage Values:</strong> Each slice represents the percentage of total budget allocated to that category
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ef4444;"></div>
+                        <div class="legend-text">
+                            <strong>Dollar Amounts:</strong> Hover over chart segments to see exact dollar amounts for each category
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f59e0b;"></div>
+                        <div class="legend-text">
+                            <strong>Unallocated Budget:</strong> Shows remaining budget not yet assigned to specific categories
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #8b5cf6;"></div>
+                        <div class="legend-text">
+                            <strong>Progress Bars:</strong> Visual representation of each bucket's allocation percentage
+                        </div>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #06b6d4;"></div>
+                        <div class="legend-text">
+                            <strong>Budget Health:</strong> Green indicates healthy allocation, yellow suggests review needed
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Insights Section -->
+            <div class="insights-section">
+                <h2 class="section-title">Budget Insights & Recommendations</h2>
+                
+                {% if total_percentage > 100 %}
+                <div class="insight-item">
+                    <div class="insight-icon">⚠️</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Over-Allocation Warning</div>
+                        <div class="insight-description">
+                            You've allocated {{ total_percentage|floatformat:1 }}% of your budget, which exceeds 100%. 
+                            Consider reducing some bucket percentages to stay within your total budget.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if total_percentage < 80 and bucket_count > 0 %}
+                <div class="insight-item">
+                    <div class="insight-icon">💡</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Optimization Opportunity</div>
+                        <div class="insight-description">
+                            You have {{ unallocated_percentage|floatformat:1 }}% unallocated budget (${{ unallocated_amount|floatformat:2 }}). 
+                            Consider creating additional buckets for savings, investments, or other financial goals.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if bucket_count == 0 %}
+                <div class="insight-item">
+                    <div class="insight-icon">🚀</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Get Started</div>
+                        <div class="insight-description">
+                            You haven't created any budget buckets yet. Start by creating categories for your main expenses 
+                            like housing, food, transportation, and savings to better manage your finances.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if total_budget > 0 and bucket_count > 0 %}
+                <div class="insight-item">
+                    <div class="insight-icon">📊</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Budget Analysis</div>
+                        <div class="insight-description">
+                            Your budget is well-structured with {{ bucket_count }} categories. 
+                            The average allocation per bucket is {{ total_percentage|floatformat:1 }}% across {{ bucket_count }} buckets 
+                            of your total budget.
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="insight-item">
+                    <div class="insight-icon">💳</div>
+                    <div class="insight-content">
+                        <div class="insight-title">50/30/20 Rule</div>
+                        <div class="insight-description">
+                            Consider following the 50/30/20 budgeting rule: 50% for needs (housing, food, utilities), 
+                            30% for wants (entertainment, dining out), and 20% for savings and debt repayment.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insight-item">
+                    <div class="insight-icon">🛡️</div>
+                    <div class="insight-content">
+                        <div class="insight-title">Emergency Fund</div>
+                        <div class="insight-description">
+                            Ensure you have an emergency fund bucket with 3-6 months of expenses. 
+                            This provides financial security for unexpected situations.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pass data to JavaScript -->
+    <script type="application/json" id="budget-data">
+    {
+        "total_budget": {{ total_budget|default:0 }},
+        "unallocated_percentage": {{ unallocated_percentage|default:0 }},
+        "unallocated_amount": {{ unallocated_amount|default:0 }},
+        "buckets": [
+            {% for bucket in buckets %}
+            {
+                "name": "{{ bucket.name|title }}",
+                "percentage": {{ bucket.percentage|default:0 }},
+                "current": {{ bucket.current|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+    </script>
+
+    <script>
+        // Chart.js configuration
+        const colors = [
+            '#10a37f', '#3b82f6', '#ef4444', '#f59e0b', '#8b5cf6', 
+            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
+        ];
+
+        // Get data from JSON script tag
+        const budgetData = JSON.parse(document.getElementById('budget-data').textContent);
+        const totalBudget = budgetData.total_budget;
+        const unallocatedPercentage = budgetData.unallocated_percentage;
+        const unallocatedAmount = budgetData.unallocated_amount;
+        
+        // Prepare bucket data
+        const bucketLabels = [];
+        const bucketData = [];
+        const bucketAmounts = [];
+        
+        // Add bucket data
+        budgetData.buckets.forEach(function(bucket) {
+            bucketLabels.push(bucket.name);
+            bucketData.push(bucket.percentage);
+            bucketAmounts.push(bucket.current);
+        });
+        
+        // Add unallocated if exists
+        if (unallocatedPercentage > 0.1) {
+            bucketLabels.push('Unallocated');
+            bucketData.push(unallocatedPercentage);
+            bucketAmounts.push(unallocatedAmount);
+        }
+
+        // Assign colors to buckets
+        const bucketColors = [];
+        for (let i = 0; i < bucketLabels.length; i++) {
+            if (bucketLabels[i] === 'Unallocated') {
+                bucketColors.push('#e5e7eb');
+            } else {
+                bucketColors.push(colors[i % colors.length]);
+            }
+        }
+
+        // Only create charts if we have data
+        if (bucketLabels.length > 0) {
+            // Budget Allocation Chart (Pie Chart)
+            const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+            const budgetChartData = {
+                labels: bucketLabels,
+                datasets: [{
+                    data: bucketData,
+                    backgroundColor: bucketColors,
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            };
+
+            new Chart(budgetCtx, {
+                type: 'doughnut',
+                data: budgetChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12 },
+                                usePointStyle: true,
+                                generateLabels: function(chart) {
+                                    const labels = chart.data.labels || [];
+                                    const data = chart.data.datasets[0].data || [];
+                                    
+                                    return labels.map(function(label, index) {
+                                        const value = data[index] || 0;
+                                        const dollarAmount = (totalBudget * value / 100);
+                                        
+                                        return {
+                                            text: label + ': ' + value.toFixed(1) + '% ($' + dollarAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ')',
+                                            fillStyle: chart.data.datasets[0].backgroundColor[index],
+                                            strokeStyle: chart.data.datasets[0].backgroundColor[index],
+                                            lineWidth: 0,
+                                            pointStyle: 'circle',
+                                            hidden: false,
+                                            index: index
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const dollarAmount = (totalBudget * value / 100);
+                                    return label + ': ' + value.toFixed(1) + '% ($' + dollarAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ')';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Budget Distribution Chart (Bar Chart)
+            const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+            const distributionChartData = {
+                labels: bucketLabels,
+                datasets: [{
+                    label: 'Budget Amount ($)',
+                    data: bucketAmounts,
+                    backgroundColor: bucketColors,
+                    borderColor: bucketColors.map(function(color) { 
+                        return color === '#e5e7eb' ? '#d1d5db' : color; 
+                    }),
+                    borderWidth: 1
+                }]
+            };
+
+            new Chart(distributionCtx, {
+                type: 'bar',
+                data: distributionChartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed.y;
+                                    return '$' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            // Show message if no data
+            document.getElementById('budgetChart').parentElement.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No budget data available</p>';
+            document.getElementById('distributionChart').parentElement.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No budget data available</p>';
+        }
+
+        // Set progress bar widths
+        const progressBars = document.querySelectorAll('.bucket-progress-bar');
+        progressBars.forEach(function(bar) {
+            const width = bar.getAttribute('data-width') || 0;
+            bar.style.width = width + '%';
+        });
+    </script>
+</body>
+</html>

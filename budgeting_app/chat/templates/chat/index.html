@@ -388,15 +388,19 @@
 
         .chart-canvas {
             position: relative;
-            min-height: 250px;
+            min-height: 350px;
             height: auto;
-            max-height: 400px; /* Limit maximum height */
+            max-height: 500px; /* Limit maximum height */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .chart-canvas canvas {
             max-height: 100%;
             width: 100% !important;
             height: auto !important;
+            max-width: 500px;
         }
 
         .budget-stats {
@@ -454,8 +458,8 @@
 
         .recommendation-item {
             display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
+            flex-direction: column;
+            gap: 0.5rem;
             padding: 0.75rem;
             background: var(--bg-secondary);
             border-radius: 0.5rem;
@@ -466,48 +470,40 @@
 
         .recommendation-item:hover {
             border-color: var(--accent-primary);
-            box-shadow: 0 1px 3px rgba(16, 163, 127, 0.1);
+            box-shadow: 0 2px 8px rgba(16, 163, 127, 0.15);
+            transform: translateY(-1px);
         }
 
         .recommendation-item.completed {
             background: var(--success-bg);
             border-color: var(--success-border);
+            opacity: 0.7;
         }
 
-        .recommendation-checkbox {
-            width: 18px;
-            height: 18px;
-            border: 2px solid var(--border-tertiary);
-            border-radius: 0.25rem;
+        .recommendation-header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            margin-top: 0.125rem;
-            transition: all 0.3s ease;
-        }
-
-        .recommendation-item.completed .recommendation-checkbox {
-            background: var(--success-border);
-            border-color: var(--success-border);
-            color: white;
-        }
-
-        .recommendation-content {
-            flex: 1;
-            min-width: 0;
+            justify-content: space-between;
+            gap: 0.5rem;
         }
 
         .recommendation-text {
             font-size: 0.875rem;
             color: var(--text-secondary);
             line-height: 1.4;
-            margin-bottom: 0.25rem;
+            font-weight: 500;
             transition: color 0.3s ease;
         }
 
         .recommendation-item.completed .recommendation-text {
             color: var(--success-text);
+        }
+
+        .recommendation-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
         }
 
         .recommendation-category {
@@ -542,6 +538,37 @@
         .priority-low {
             background: #f0f9ff;
             color: #0284c7;
+        }
+
+        .recommendation-action {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            font-style: italic;
+            line-height: 1.3;
+            margin-top: 0.25rem;
+            transition: color 0.3s ease;
+        }
+
+        .recommendation-item:hover .recommendation-action {
+            color: var(--accent-primary);
+        }
+
+        .recommendation-checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-tertiary);
+            border-radius: 0.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-item.completed .recommendation-checkbox {
+            background: var(--success-border);
+            border-color: var(--success-border);
+            color: white;
         }
 
         .empty-recommendations {
@@ -882,6 +909,9 @@
                 <button class="theme-toggle" id="debugButton" title="Debug charts" style="margin-left: 0.5rem;">
                     🔧
                 </button>
+                <button class="theme-toggle" id="exportButton" title="Export budget data" style="margin-left: 0.5rem;">
+                    📊
+                </button>
             </div>
         </div>
 
@@ -918,12 +948,12 @@
                 </div>
             </div>
 
-            <div class="chart-container">
+            <!-- <div class="chart-container">
                 <div class="chart-title">Spending Timeline</div>
                 <div class="chart-canvas">
                     <canvas id="spendingChart" width="300" height="250"></canvas>
                 </div>
-            </div>
+            </div> -->
 
             <div class="budget-stats" id="budgetStats">
                 <div class="stat-row">
@@ -995,6 +1025,9 @@
                 // Debug button
                 this.debugButton = document.getElementById('debugButton');
                 
+                // Export button
+                this.exportButton = document.getElementById('exportButton');
+                
                 // Sidebar elements
                 this.sidebarToggle = document.getElementById('sidebarToggle');
                 this.chatSidebar = document.getElementById('chatSidebar');
@@ -1036,6 +1069,9 @@
                 
                 // Initialize debug button
                 this.debugButton.addEventListener('click', () => this.debugCharts());
+                
+                // Initialize export button
+                this.exportButton.addEventListener('click', () => this.exportData());
                 
                 // Initialize sidebar
                 this.initializeSidebar();
@@ -1087,6 +1123,11 @@
                 
                 console.log('Testing with dummy data:', testData);
                 this.updateCharts('Test', testData);
+            }
+            
+            exportData() {
+                // Open export page in new tab
+                window.open('/export/', '_blank');
             }
             
             initializeSidebar() {
@@ -1307,11 +1348,36 @@
             updateChartTheme() {
                 const isDark = this.currentTheme === 'dark';
                 const gridColor = isDark ? '#404040' : '#f3f4f6';
-                const textColor = isDark ? '#e5e5e5' : '#374151';
+                const textColor = isDark ? '#ffffff' : '#000000';
                 
                 // Update budget chart
                 if (this.budgetChart) {
                     this.budgetChart.options.plugins.legend.labels.color = textColor;
+                    // Force legend to regenerate with new colors
+                    this.budgetChart.options.plugins.legend.labels.generateLabels = function(chart) {
+                        // Create labels directly from chart data instead of using default generator
+                        const chartLabels = chart.data.labels || [];
+                        const chartData = chart.data.datasets[0].data || [];
+                        const totalBudget = chart.data.totalBudget || 0;
+                        
+                        // Create labels with percentage and dollar amounts
+                        const labels = chartLabels.map((labelText, index) => {
+                            const value = chartData[index] || 0;
+                            const dollarAmount = (totalBudget * value / 100);
+                            
+                            return {
+                                text: `${labelText}: ${value.toFixed(1)}% ($${dollarAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})`,
+                                fillStyle: chart.data.datasets[0].backgroundColor[index],
+                                strokeStyle: chart.data.datasets[0].backgroundColor[index],
+                                lineWidth: 0,
+                                pointStyle: 'circle',
+                                hidden: false,
+                                index: index
+                            };
+                        });
+                        
+                        return labels;
+                    };
                     this.budgetChart.update();
                 }
                 
@@ -1344,23 +1410,58 @@
                         maintainAspectRatio: false,
                         layout: {
                             padding: {
-                                bottom: 20
+                                top: 20,
+                                bottom: 40,
+                                left: 20,
+                                right: 20
                             }
                         },
                         plugins: {
                             legend: {
                                 position: 'bottom',
-                                align: 'start',
+                                align: 'center',
                                 labels: {
-                                    padding: 8,
-                                    font: { size: 10 },
-                                    color: this.currentTheme === 'dark' ? '#e5e5e5' : '#374151',
-                                    boxWidth: 12,
-                                    boxHeight: 12,
+                                    padding: 10,
+                                    font: { size: 12 },
+                                    color: this.currentTheme === 'dark' ? '#ffffff' : '#000000',
+                                    boxWidth: 14,
+                                    boxHeight: 14,
                                     usePointStyle: true,
-                                    pointStyle: 'circle'
+                                    pointStyle: 'circle',
+                                    generateLabels: function(chart) {
+                                        // Create labels directly from chart data instead of using default generator
+                                        const chartLabels = chart.data.labels || [];
+                                        const chartData = chart.data.datasets[0].data || [];
+                                        const totalBudget = chart.data.totalBudget || 0;
+                                        
+                                        // Debug: Log the chart data
+                                        console.log('=== LEGEND DEBUG ===');
+                                        console.log('Chart data labels:', chartLabels);
+                                        console.log('Chart data values:', chartData);
+                                        console.log('Total budget:', totalBudget);
+                                        
+                                        // Create labels with percentage and dollar amounts
+                                        const labels = chartLabels.map((labelText, index) => {
+                                            const value = chartData[index] || 0;
+                                            const dollarAmount = (totalBudget * value / 100);
+                                            
+                                            return {
+                                                text: `${labelText}: ${value.toFixed(1)}% ($${dollarAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})`,
+                                                fillStyle: chart.data.datasets[0].backgroundColor[index],
+                                                strokeStyle: chart.data.datasets[0].backgroundColor[index],
+                                                lineWidth: 0,
+                                                pointStyle: 'circle',
+                                                hidden: false,
+                                                index: index
+                                            };
+                                        });
+                                        
+                                        console.log('Generated labels:', labels);
+                                        console.log('==================');
+                                        
+                                        return labels;
+                                    }
                                 },
-                                maxHeight: 120,
                                 onClick: null // Disable legend clicking to prevent chart issues
                             },
                             tooltip: {
@@ -1368,7 +1469,10 @@
                                     label: function(context) {
                                         const label = context.label || '';
                                         const value = context.parsed;
-                                        return `${label}: ${value.toFixed(1)}%`;
+                                        // Calculate dollar amount from percentage and total budget
+                                        const totalBudget = context.chart.data.totalBudget || 0;
+                                        const dollarAmount = (totalBudget * value / 100);
+                                        return `${label}: ${value.toFixed(1)}% ($${dollarAmount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
                                     }
                                 }
                             }
@@ -1376,7 +1480,8 @@
                     }
                 });
 
-                // Initialize Spending Timeline Chart (Line Chart)
+                // Initialize Spending Timeline Chart (Line Chart) - COMMENTED OUT
+                /*
                 const spendingCtx = document.getElementById('spendingChart').getContext('2d');
                 this.spendingChart = new Chart(spendingCtx, {
                     type: 'line',
@@ -1419,6 +1524,7 @@
                             }
                     }
                 });
+                */
             }
             
             updateCharts(bucketSummary, bucketData = null) {
@@ -1471,8 +1577,8 @@
                 // Update budget allocation chart
                 this.updateBudgetChart(buckets, totalPercent, totalBudget);
                 
-                // Update spending timeline
-                this.updateSpendingTimeline(totalBudget);
+                // Update spending timeline - COMMENTED OUT
+                // this.updateSpendingTimeline(totalBudget);
             }
             
             updateBudgetChart(buckets, totalPercent, totalBudget) {
@@ -1491,6 +1597,8 @@
                     this.budgetChart.data.labels = ['Unallocated'];
                     this.budgetChart.data.datasets[0].data = [100];
                     this.budgetChart.data.datasets[0].backgroundColor = [this.currentTheme === 'dark' ? '#525252' : '#e5e7eb'];
+                    // Store total budget for tooltip calculations
+                    this.budgetChart.data.totalBudget = totalBudget;
                 } else {
                     const labels = [];
                     const data = [];
@@ -1530,24 +1638,34 @@
                     this.budgetChart.data.labels = labels;
                     this.budgetChart.data.datasets[0].data = data;
                     this.budgetChart.data.datasets[0].backgroundColor = backgroundColors;
+                    // Store total budget for tooltip calculations
+                    this.budgetChart.data.totalBudget = totalBudget;
+                    
+                    // Dynamically adjust legend and container based on number of entries
+                    const chartInfo = document.getElementById('chartInfo');
+                    const chartCanvas = this.budgetChart.canvas.parentElement;
+                    
+                    // Calculate dynamic legend height based on number of entries
+                    const baseHeight = 350;
+                    const legendRowHeight = 25; // Approximate height per legend row
+                    const maxEntriesPerRow = 3; // Maximum entries per row
+                    const rowsNeeded = Math.ceil(labels.length / maxEntriesPerRow);
+                    const dynamicHeight = baseHeight + (rowsNeeded * legendRowHeight);
+                    
+                    // Set dynamic container height
+                    chartCanvas.style.minHeight = `${Math.min(dynamicHeight, 600)}px`;
+                    chartCanvas.style.maxHeight = `${Math.min(dynamicHeight + 100, 700)}px`;
                     
                     // Show scroll info if there are many categories
-                    const chartInfo = document.getElementById('chartInfo');
-                    if (labels.length > 7) {
+                    if (labels.length > 8) {
                         chartInfo.style.display = 'block';
-                        
-                        // Adjust chart container height for better legend visibility
-                        const chartCanvas = this.budgetChart.canvas.parentElement;
-                        chartCanvas.style.minHeight = '300px';
-                        chartCanvas.style.maxHeight = '450px';
                     } else {
                         chartInfo.style.display = 'none';
-                        
-                        // Reset to normal height
-                        const chartCanvas = this.budgetChart.canvas.parentElement;
-                        chartCanvas.style.minHeight = '250px';
-                        chartCanvas.style.maxHeight = '400px';
                     }
+                    
+                    // Update legend options dynamically
+                    this.budgetChart.options.plugins.legend.labels.font.size = labels.length > 6 ? 10 : 12;
+                    this.budgetChart.options.plugins.legend.labels.padding = labels.length > 6 ? 6 : 10;
                 }
                 
                 // Force chart update with animation
@@ -1558,6 +1676,8 @@
                 });
             }
             
+            // updateSpendingTimeline function - COMMENTED OUT
+            /*
             updateSpendingTimeline(currentBudget) {
                 const now = new Date();
                 const timeLabel = now.toLocaleTimeString('en-US', { 
@@ -1579,6 +1699,7 @@
                 this.spendingChart.data.datasets[0].data = this.spendingData.map(d => d.budget);
                 this.spendingChart.update();
             }
+            */
             
             generateRecommendations(bucketData, frontendResponse, backendRecommendations = []) {
                 const newRecommendations = [];
@@ -1588,7 +1709,8 @@
                     backendRecommendations.forEach(rec => {
                         newRecommendations.push({
                             ...rec,
-                            source: 'backend'
+                            source: 'backend',
+                            action_text: rec.action_text || rec.text // Use action_text if available, fallback to text
                         });
                     });
                 }
@@ -1603,7 +1725,8 @@
                     if (totalPercent > 100) {
                         newRecommendations.push({
                             id: 'over_allocated',
-                            text: `You've allocated ${totalPercent.toFixed(1)}% of your budget. Consider reducing some buckets.`,
+                            text: `Fix over-allocation (${totalPercent.toFixed(1)}%)`,
+                            action_text: `I've allocated ${totalPercent.toFixed(1)}% of my budget. Help me rebalance my buckets to stay within 100%`,
                             category: 'Budget Balance',
                             priority: 'high',
                             type: 'warning',
@@ -1616,7 +1739,8 @@
                         const remaining = 100 - totalPercent;
                         newRecommendations.push({
                             id: 'under_allocated',
-                            text: `You have ${remaining.toFixed(1)}% unallocated. Consider adding an emergency fund or savings bucket.`,
+                            text: `Optimize unallocated budget (${remaining.toFixed(1)}%)`,
+                            action_text: `I have ${remaining.toFixed(1)}% unallocated. Help me create additional buckets for savings, investments, or other financial goals`,
                             category: 'Optimization',
                             priority: 'medium',
                             type: 'suggestion',
@@ -1633,7 +1757,8 @@
                     if (!hasEmergencyFund && buckets.length >= 2) {
                         newRecommendations.push({
                             id: 'emergency_fund',
-                            text: 'Create an emergency fund bucket with 3-6 months of expenses for financial security.',
+                            text: 'Add emergency fund bucket',
+                            action_text: 'Create an emergency fund bucket with 10-20% of my budget for financial security',
                             category: 'Safety Net',
                             priority: 'high',
                             type: 'action',
@@ -1645,7 +1770,8 @@
                     if (buckets.length >= 3 && totalBudget > 0) {
                         newRecommendations.push({
                             id: 'fifty_thirty_twenty',
-                            text: 'Consider the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment.',
+                            text: 'Apply 50/30/20 budget rule',
+                            action_text: 'Help me reorganize my budget using the 50/30/20 rule: 50% needs, 30% wants, 20% savings/debt repayment',
                             category: 'Best Practice',
                             priority: 'low',
                             type: 'tip',
@@ -1662,7 +1788,8 @@
                     if (response.includes('debt') || response.includes('loan') || response.includes('credit')) {
                         newRecommendations.push({
                             id: 'debt_payoff',
-                            text: 'Prioritize high-interest debt payments to save money on interest over time.',
+                            text: 'Create debt payoff strategy',
+                            action_text: 'Help me prioritize and create a plan to pay off my high-interest debt using the avalanche method',
                             category: 'Debt Management',
                             priority: 'high',
                             type: 'action',
@@ -1674,7 +1801,8 @@
                     if (response.includes('invest') || response.includes('retirement') || response.includes('401k')) {
                         newRecommendations.push({
                             id: 'investment_automation',
-                            text: 'Set up automatic investments to take advantage of dollar-cost averaging.',
+                            text: 'Set up automatic investments',
+                            action_text: 'Help me create an investment strategy with automatic monthly contributions to take advantage of dollar-cost averaging',
                             category: 'Investment',
                             priority: 'medium',
                             type: 'tip',
@@ -1686,7 +1814,8 @@
                     if (response.includes('subscription') || response.includes('streaming') || response.includes('monthly')) {
                         newRecommendations.push({
                             id: 'subscription_audit',
-                            text: 'Review and cancel unused subscriptions to free up budget space.',
+                            text: 'Audit subscription services',
+                            action_text: 'Help me review and cancel unused subscriptions to free up budget space',
                             category: 'Cost Cutting',
                             priority: 'medium',
                             type: 'action',
@@ -1737,20 +1866,50 @@
             createRecommendationElement(rec) {
                 const element = document.createElement('div');
                 element.className = `recommendation-item ${rec.completed ? 'completed' : ''}`;
-                element.onclick = () => this.toggleRecommendation(rec.id);
+                
+                // Handle click to fill chat input with action text
+                element.onclick = (e) => {
+                    e.stopPropagation();
+                    if (rec.action_text) {
+                        this.messageInput.value = rec.action_text;
+                        this.messageInput.style.height = 'auto';
+                        this.messageInput.style.height = this.messageInput.scrollHeight + 'px';
+                        this.messageInput.focus();
+                        
+                        // Mark as completed when clicked
+                        this.toggleRecommendation(rec.id);
+                    }
+                };
                 
                 element.innerHTML = `
-                    <div class="recommendation-checkbox">
-                        ${rec.completed ? '✓' : ''}
-                    </div>
-                    <div class="recommendation-content">
+                    <div class="recommendation-header">
                         <div class="recommendation-text">${rec.text}</div>
-                        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-                            <span class="recommendation-category">${rec.category}</span>
-                            <span class="recommendation-priority priority-${rec.priority}">${rec.priority}</span>
+                        <div class="recommendation-checkbox" data-recommendation-id="${rec.id}">
+                            ${rec.completed ? '✓' : ''}
                         </div>
                     </div>
+                    <div class="recommendation-meta">
+                        <span class="recommendation-category">${rec.category}</span>
+                        <span class="recommendation-priority priority-${rec.priority}">${rec.priority}</span>
+                    </div>
+                    ${rec.action_text ? `<div class="recommendation-action">${rec.action_text}</div>` : ''}
                 `;
+                
+                // Add separate click handler for checkbox to handle unchecking
+                const checkbox = element.querySelector('.recommendation-checkbox');
+                checkbox.onclick = (e) => {
+                    e.stopPropagation();
+                    const wasCompleted = rec.completed;
+                    
+                    // If unchecking (was completed), clear the text input first
+                    if (wasCompleted) {
+                        this.messageInput.value = '';
+                        this.messageInput.style.height = 'auto';
+                    }
+                    
+                    // Then toggle the recommendation state
+                    this.toggleRecommendation(rec.id);
+                };
                 
                 return element;
             }
