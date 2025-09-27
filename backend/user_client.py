@@ -25,7 +25,7 @@ class UserClient:
         # Initialize LLM clients
         self.frontend: OpenRouterClient = OpenRouterClient()
         self.backend: OpenRouterClient = OpenRouterClient()
-
+        self.command_translator: CommandTranslator = CommandTranslator()
         # Resolve system prompts (fallback to files if not provided)
         project_dir = Path(__file__).resolve().parents[1]
         frontend_path = project_dir / "promptfrontend.txt"
@@ -48,7 +48,7 @@ class UserClient:
                 )
 
         self.frontend_system_prompt: str = frontend_system_prompt
-        self.backend_system_prompt: str = backend_system_prompt
+        self.backend_system_prompt: str = backend_system_prompt + "\n\n" + self.get_status()
 
         # Track models per side (allow overrides)
         self.frontend_model: str = frontend_model

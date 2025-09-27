@@ -19,12 +19,23 @@ Normalization and rules:
 - CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
 - When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
+ - Do not emit commands for the implicit "free" bucket unless required to make an operation possible. Important: when you resize other buckets downward, the "free" bucket does NOT auto-increase; use `RESIZE_BUCKET free <new_percentage>` to claim slack before `ADD_BUCKET` if needed.
 - "rebalance" => REBALANCE (set dollar amounts to match current percentages).
 - "make totals/percentages equal 100" => AUTO_RESIZE_TO_100.
 - "put/add/deposit $X to NAME" => ADD_AMOUNT name X.
 - "spend/withdraw/take $X from NAME" => SUBTRACT_AMOUNT name X.
 - "delete/remove NAME bucket" => REMOVE_BUCKET name.
 - "create/make NAME at P%" => ADD_BUCKET name P.
+
+Feasibility-first planning (do only "possible" actions):
+- Always read the trailing CURRENT_STATUS snapshot to understand existing buckets, their percentages, and totals.
+- Output only sequences that will succeed against the CURRENT_STATUS.
+- Adding a new bucket at P%:
+  - If `free` percentage >= P: just `ADD_BUCKET name P`.
+  - If total% < 100 and `free` < P: first increase `free` to cover P using `RESIZE_BUCKET free <free+needed (<= 100 - non_free_total)>`, then `ADD_BUCKET`.
+  - If total% == 100 and `free` < P: first lower other bucket(s) using `RESIZE_BUCKET` so their total reduction equals at least (P - free); then `RESIZE_BUCKET free <old_free + reduction>`; then `ADD_BUCKET name P`.
+- Increasing a bucket's percentage beyond available capacity: mirror the above — reduce other bucket(s) first (not `free`), then raise `free` if required, then resize the target bucket.
+- Prefer minimal commands. Only remove buckets if explicitly requested by the user.
 
 Output format:
 - Output ONLY commands as plain text, each on its own line, or exactly NO_ACTION.
@@ -33,46 +44,142 @@ Output format:
 Inputs provided to you:
 - USER_REQUEST: <the user's latest message>
 - LLM_RESPONSE: <the assistant's latest reply>
+- CURRENT_STATUS: <a snapshot from CommandTranslator.get_status(); this often appears at the end of your prompt>
 
-Your job: Decide if actions are required based on USER_REQUEST (LLM_RESPONSE may paraphrase intent). If yes, return the minimal set of commands to fulfill the request; if not, return NO_ACTION.
+Your job: Decide if actions are required based on USER_REQUEST (LLM_RESPONSE may paraphrase intent). Use CURRENT_STATUS to ensure your commands are feasible. If actions are needed, return the minimal set of commands that will succeed; otherwise, return NO_ACTION.
 
-Examples:
+Non-commitment and options:
+- If LLM_RESPONSE presents options, asks a question, or proposes alternatives without explicit confirmation to proceed, do not make any changes. Return exactly NO_ACTION.
+- Only execute changes when USER_REQUEST explicitly requests an action (e.g., set/add/remove/move/rebalance) or clearly confirms a specific option.
+
+Examples (each includes a trailing CURRENT_STATUS snapshot):
+
+USER_REQUEST: What categories do you recommend for my budget?
+LLM_RESPONSE: Here are some options: (1) needs 50%, wants 30%, savings 20%; (2) rent 40%, groceries 20%, savings 20%, other 20%. Would you like to proceed with one of these?
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$0.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=100.00%, current_value=$0.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
+OUTPUT:
+NO_ACTION
+
 USER_REQUEST: Put $50 into groceries.
 LLM_RESPONSE: I'll add $50 to the groceries bucket.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$0.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=100.00%, current_value=$0.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
 OUTPUT:
 ADD_BUCKET groceries 0.00
 ADD_AMOUNT groceries 50
 
 USER_REQUEST: Set utilities to 15%.
 LLM_RESPONSE: I'll allocate 15% to utilities.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$0.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=100.00%, current_value=$0.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
 OUTPUT:
 ADD_BUCKET utilities 15.00
 
 USER_REQUEST: My monthly income is $2600 and rent is $1200. Set rent accordingly.
 LLM_RESPONSE: Rent should be 46.15% of income; I'll set it and the budget.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$0.00, total_percentage=100.00%):
+  Bucket(name='free', percentage=100.00%, current_value=$0.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
 OUTPUT:
 SET_TOTAL_BUDGET 2600
 ADD_BUCKET rent 46.15
 
-USER_REQUEST: Set my total budget to $3000.
-LLM_RESPONSE: Great, we can work with a $3000 monthly budget.
+USER_REQUEST: Create a vacation bucket at 10%.
+LLM_RESPONSE: I'll add a 10% vacation bucket.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='rent', percentage=50.00%, current_value=$1500.00)
+  Bucket(name='groceries', percentage=30.00%, current_value=$900.00)
+  Bucket(name='entertainment', percentage=20.00%, current_value=$600.00)
+  Bucket(name='free', percentage=0.00%, current_value=$0.00)
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
 OUTPUT:
-SET_TOTAL_BUDGET 3000
-
-USER_REQUEST: Create a vacation bucket at 10% and rent at 40%.
-LLM_RESPONSE: I'll allocate 10% to vacation and 40% to rent.
-OUTPUT:
+RESIZE_BUCKET rent 40.00
+RESIZE_BUCKET free 10.00
 ADD_BUCKET vacation 10.00
-ADD_BUCKET rent 40.00
+
+USER_REQUEST: Add a savings bucket at 5%.
+LLM_RESPONSE: I'll create savings at 5%.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=92.00%):
+  Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
+  Bucket(name='entertainment', percentage=12.00%, current_value=$360.00)
+  Bucket(name='free', percentage=2.00%, current_value=$60.00)
+Total percentage: 92.00%
+Percentage valid: False
+============================================================
+OUTPUT:
+RESIZE_BUCKET free 7.00
+ADD_BUCKET savings 5.00
 
 USER_REQUEST: Move $50 into vacation and take $20 from groceries.
 LLM_RESPONSE: Done: +$50 vacation, -$20 groceries.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
+  Bucket(name='vacation', percentage=10.00%, current_value=$300.00)
+  Bucket(name='free', percentage=0.00%, current_value=$0.00)
+  // ... other buckets ...
+Total percentage: 100.00%
+Percentage valid: True
+============================================================
 OUTPUT:
 ADD_AMOUNT vacation 50
 SUBTRACT_AMOUNT groceries 20
 
 USER_REQUEST: Make the percentages add up to 100 and rebalance.
 LLM_RESPONSE: I'll normalize allocations to 100% and rebalance funds.
+CURRENT_STATUS:
+============================================================
+CURRENT BUCKET MANAGER STATUS
+============================================================
+BucketManager(total_budget=$3000.00, total_percentage=87.00%):
+  Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
+  Bucket(name='entertainment', percentage=12.00%, current_value=$360.00)
+  Bucket(name='vacation', percentage=5.00%, current_value=$150.00)
+  Bucket(name='free', percentage=50.00%, current_value=$1500.00)
+Total percentage: 87.00%
+Percentage valid: False
+============================================================
 OUTPUT:
 AUTO_RESIZE_TO_100
 REBALANCE

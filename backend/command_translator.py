@@ -130,8 +130,18 @@ class CommandTranslator:
             elif cmd_type == 'ADD_AMOUNT':
                 name = args[0]
                 amount = float(args[1])
+                # Auto-create bucket at 0.00% if it doesn't exist
+                created = False
+                if self.bucket_manager.get_bucket(name) is None:
+                    # Create with 0% so it's always feasible
+                    self.bucket_manager.add_bucket(name, 0.0)
+                    created = True
                 success = self.bucket_manager.add_amount_to_bucket(name, amount)
                 if success:
+                    if created:
+                        return (
+                            f"✅ Created bucket '{name}' at 0.00% and added ${amount:.2f}"
+                        )
                     return f"✅ Added ${amount:.2f} to bucket '{name}'"
                 else:
                     return f"❌ Failed to add amount to bucket '{name}' - bucket doesn't exist"
@@ -139,8 +149,17 @@ class CommandTranslator:
             elif cmd_type == 'SUBTRACT_AMOUNT':
                 name = args[0]
                 amount = float(args[1])
+                # Auto-create bucket at 0.00% if it doesn't exist
+                created = False
+                if self.bucket_manager.get_bucket(name) is None:
+                    self.bucket_manager.add_bucket(name, 0.0)
+                    created = True
                 success = self.bucket_manager.subtract_amount_from_bucket(name, amount)
                 if success:
+                    if created:
+                        return (
+                            f"✅ Created bucket '{name}' at 0.00% and subtracted ${amount:.2f}"
+                        )
                     return f"✅ Subtracted ${amount:.2f} from bucket '{name}'"
                 else:
                     return f"❌ Failed to subtract amount from bucket '{name}' - bucket doesn't exist"
