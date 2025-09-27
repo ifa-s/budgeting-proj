@@ -4,3 +4,4 @@ venv*
 !.env.example
 *.pyc
 logs*
+*.pdf

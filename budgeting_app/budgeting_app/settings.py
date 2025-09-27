@@ -25,7 +25,7 @@ load_dotenv(BASE_DIR.parent / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-(=nu^6&h8sks5=k-&u9oi8l#e#ulux104iynfw6x56yk5qh#1e'
+SECRET_KEY = os.getenv('DJANGO_SECRET', '')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -111,7 +111,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/New_York'
 
 USE_I18N = True
 
@@ -134,5 +134,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # API Keys
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', 'AIzaSyAbF-NHwzGr9HWmENSS8US8PPoLaRhOT_w')
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
