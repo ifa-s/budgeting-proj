@@ -23,30 +23,34 @@ def main() -> int:
         return 1
     print(f"Assistant: {reply}\n")
 
-    while True:
-        try:
-            user_text = input("You: ").strip()
-        except (EOFError, KeyboardInterrupt):
-            print()  # newline after Ctrl+D/Ctrl+C
-            break
+   #while True:
+    try:
+        user_text = input("You: ").strip()
+    except (EOFError, KeyboardInterrupt):
+        print()  # newline after Ctrl+D/Ctrl+C
+        #break
 
-        if not user_text:
-            break
+    #if not user_text:
+        #break
 
-        # Process via frontend + backend + execute planned commands
-        try:
-            result: Dict[str, str] = client.process_user_input(user_text)
-        except Exception as exc:  # pragma: no cover
-            print("Error processing input:", exc)
-            continue
+    # Process via frontend + backend + execute planned commands
+    try:
+        result: Dict[str, str] = client.process_user_input(user_text)
+    except Exception as exc:  # pragma: no cover
+        print("Error processing input:", exc)
+        #continue
 
-        print(f"🎯 FRONTEND: {result.get('frontend', '')}\n")
-        print(f"⚙️ BACKEND: {result.get('backend', '')}\n")
+    print(f"🎯 FRONTEND: {result.get('frontend', '')}\n")
+    print(f"⚙️ BACKEND: {result.get('backend', '')}\n")
 
-        commands_output = result.get("commands", "")
-        if commands_output:
-            print(f"🧰 COMMANDS:\n{commands_output}\n")
+    commands_output = result.get("commands", "")
+    if commands_output:
+        print(f"🧰 COMMANDS:\n{commands_output}\n")
+        
+    print(client.get_status())
 
+
+    
     return 0
 
 

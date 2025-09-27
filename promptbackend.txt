@@ -14,8 +14,9 @@ Allowed commands (one per line):
 
 Normalization and rules:
 - Amounts: positive decimals in dollars, no "$" or commas (e.g., 1500.00).
-- Percentages: 0–100 with up to two decimals (e.g., 12.5).
+- Percentages: 0–100 formatted with EXACTLY two decimals (e.g., 12.50). Round to nearest 0.01.
 - Bucket names: lowercase; use underscores instead of spaces; strip surrounding punctuation.
+- CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
 - When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
 - "rebalance" => REBALANCE (set dollar amounts to match current percentages).
@@ -36,6 +37,23 @@ Inputs provided to you:
 Your job: Decide if actions are required based on USER_REQUEST (LLM_RESPONSE may paraphrase intent). If yes, return the minimal set of commands to fulfill the request; if not, return NO_ACTION.
 
 Examples:
+USER_REQUEST: Put $50 into groceries.
+LLM_RESPONSE: I'll add $50 to the groceries bucket.
+OUTPUT:
+ADD_BUCKET groceries 0.00
+ADD_AMOUNT groceries 50
+
+USER_REQUEST: Set utilities to 15%.
+LLM_RESPONSE: I'll allocate 15% to utilities.
+OUTPUT:
+ADD_BUCKET utilities 15.00
+
+USER_REQUEST: My monthly income is $2600 and rent is $1200. Set rent accordingly.
+LLM_RESPONSE: Rent should be 46.15% of income; I'll set it and the budget.
+OUTPUT:
+SET_TOTAL_BUDGET 2600
+ADD_BUCKET rent 46.15
+
 USER_REQUEST: Set my total budget to $3000.
 LLM_RESPONSE: Great, we can work with a $3000 monthly budget.
 OUTPUT:
@@ -44,8 +62,8 @@ SET_TOTAL_BUDGET 3000
 USER_REQUEST: Create a vacation bucket at 10% and rent at 40%.
 LLM_RESPONSE: I'll allocate 10% to vacation and 40% to rent.
 OUTPUT:
-ADD_BUCKET vacation 10
-ADD_BUCKET rent 40
+ADD_BUCKET vacation 10.00
+ADD_BUCKET rent 40.00
 
 USER_REQUEST: Move $50 into vacation and take $20 from groceries.
 LLM_RESPONSE: Done: +$50 vacation, -$20 groceries.
