@@ -54,10 +54,7 @@ def get_detailed_bucket_data(bucket_manager):
         for name in bucket_names:
             bucket = bucket_manager.get_bucket(name)
             if bucket:
-                # Filter out the default "free" bucket from charts if it's at 100% AND there are other buckets
-                if name == "free" and bucket.get_percentage() >= 99.0 and len(bucket_names) > 1:
-                    continue
-                    
+                # Include all defined buckets; unallocated is implicit (100 - allocated)
                 current_amount = total_budget * (bucket.get_percentage() / 100.0)
                 bucket_info = {
                     'name': name,

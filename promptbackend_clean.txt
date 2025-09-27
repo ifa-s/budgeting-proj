@@ -18,8 +18,7 @@ Normalization and rules:
 - CRITICAL (high priority): If a bucket name has NOT been introduced via ADD_BUCKET earlier in this session, emit ADD_BUCKET for it BEFORE using RESIZE_BUCKET, ADD_AMOUNT, SUBTRACT_AMOUNT, or REMOVE_BUCKET. If the user only specifies an amount (no percentage), create it at 0.00 percent.
 - CRITICAL (high priority): When multiple commands are needed, ALWAYS batch subtraction and resizing downwards FIRST. 
 - Prefer RESIZE_BUCKET when changing an existing bucket; use ADD_BUCKET only for new buckets.
-- When setting only percentages, do not emit commands for the implicit "free" bucket; it adjusts automatically.
- - Do not emit commands for the implicit "free" bucket unless required to make an operation possible. Important: when you resize other buckets downward, the "free" bucket does NOT auto-increase; use `RESIZE_BUCKET free <new_percentage>` to claim slack before `ADD_BUCKET` if needed.
+- Unallocated capacity is implicit: unallocated% = 100 - sum(all bucket%). Never emit commands involving a "free" bucket. When adding or resizing buckets, ensure the total does not exceed 100%. If needed, first reduce other bucket percentages with `RESIZE_BUCKET` before increasing or adding a bucket.
 - PRIORITY RULE: Always prioritize SUBTRACT_AMOUNT over ADD_AMOUNT when both operations are possible or when the user's intent is ambiguous. When adjusting budgets, prefer reducing amounts from buckets rather than adding to them, unless explicitly requested otherwise.
 - "make totals/percentages equal 100" => AUTO_RESIZE_TO_100.
 - "put/add/deposit $X to NAME" => ADD_AMOUNT name X.
@@ -31,10 +30,9 @@ Feasibility-first planning (do only "possible" actions):
 - Always read the trailing CURRENT_STATUS snapshot to understand existing buckets, their percentages, and totals.
 - Output only sequences that will succeed against the CURRENT_STATUS.
 - Adding a new bucket at P%:
-  - If `free` percentage >= P: just `ADD_BUCKET name P`.
-  - If total% < 100 and `free` < P: first increase `free` to cover P using `RESIZE_BUCKET free <free+needed (<= 100 - non_free_total)>`, then `ADD_BUCKET`.
-  - If total% == 100 and `free` < P: first lower other bucket(s) using `RESIZE_BUCKET` so their total reduction equals at least (P - free); then `RESIZE_BUCKET free <old_free + reduction>`; then `ADD_BUCKET name P`.
-- Increasing a bucket's percentage beyond available capacity: mirror the above — reduce other bucket(s) first (not `free`), then raise `free` if required, then resize the target bucket.
+  - If total% + P <= 100: `ADD_BUCKET name P`.
+  - If total% + P > 100: first lower other bucket(s) with `RESIZE_BUCKET` so the total reduction is at least (total% + P - 100); then `ADD_BUCKET name P`.
+- Increasing a bucket's percentage beyond available capacity: reduce other bucket(s) first so the increase fits within 100%, then resize the target bucket.
 - Prefer minimal commands. Only remove buckets if explicitly requested by the user.
 
 Output format:
@@ -95,11 +93,10 @@ CURRENT_STATUS:
 ============================================================
 CURRENT BUCKET MANAGER STATUS
 ============================================================
-BucketManager(total_budget=$3000.00, total_percentage=100.00%):
+  BucketManager(total_budget=$3000.00, total_percentage=45.00%):
   Bucket(name='savings', percentage=20.00%, current_value=$600.00)
   Bucket(name='entertainment', percentage=15.00%, current_value=$450.00)
   Bucket(name='transportation', percentage=10.00%, current_value=$300.00)
-  Bucket(name='free', percentage=55.00%, current_value=$1650.00)
 Total percentage: 100.00%
 Percentage valid: True
 ============================================================
@@ -113,11 +110,10 @@ CURRENT_STATUS:
 ============================================================
 CURRENT BUCKET MANAGER STATUS
 ============================================================
-BucketManager(total_budget=$3000.00, total_percentage=87.00%):
+  BucketManager(total_budget=$3000.00, total_percentage=37.00%):
   Bucket(name='groceries', percentage=20.00%, current_value=$600.00)
   Bucket(name='entertainment', percentage=12.00%, current_value=$360.00)
   Bucket(name='vacation', percentage=5.00%, current_value=$150.00)
-  Bucket(name='free', percentage=50.00%, current_value=$1500.00)
 Total percentage: 87.00%
 Percentage valid: False
 ============================================================

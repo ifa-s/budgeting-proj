@@ -20,21 +20,18 @@ class BucketManager:
     
     def __init__(self, total_budget: float = 0.0):
         """
-        Initialize the BucketManager with a default "free" bucket at 100%.
+        Initialize the BucketManager with no buckets. Unallocated space is
+        implicitly (100 - sum of bucket percentages).
         
         Args:
             total_budget (float): Total budget amount available for allocation
         """
         self.buckets: Dict[str, Bucket] = {}
         self.total_budget = total_budget
-        
-        # Create default "free" bucket with 100% allocation
-        free_bucket = Bucket("free", 100.0)
-        self.buckets["free"] = free_bucket
     
     def add_bucket(self, name: str, percentage: float, current_value: float = 0.0) -> bool:
         """
-        Add a new bucket to the manager, automatically resizing "free" bucket if needed.
+        Add a new bucket to the manager if there is enough unallocated capacity.
         
         Args:
             name (str): Name of the bucket
@@ -42,27 +39,15 @@ class BucketManager:
             current_value (float): Deprecated. Ignored.
             
         Returns:
-            bool: True if bucket was added successfully, False if "free" bucket doesn't have enough percentage
+            bool: True if bucket was added successfully, False if insufficient unallocated percentage is available
         """
         if name in self.buckets:
             raise ValueError(f"Bucket '{name}' already exists")
-        
-        # Check if "free" bucket has enough percentage to allocate
-        if "free" in self.buckets:
-            free_percentage = self.buckets["free"].get_percentage()
-            if percentage > free_percentage:
-                # If not enough, just use all that's left in free
-                percentage = free_percentage
-            if free_percentage == 0.0:
-                return False
-            # Resize "free" bucket to accommodate new bucket
-            new_free_percentage = free_percentage - percentage
-            self.buckets["free"].resize_percentage(new_free_percentage)
-        else:
-            # If no "free" bucket exists, check total percentage constraint
-            current_total = self.get_total_percentage()
-            if current_total + percentage > 100.0:
-                return False
+
+        # Enforce total percentage constraint via unallocated space
+        current_total = self.get_total_percentage()
+        if current_total + percentage > 100.0 + 1e-6:
+            return False
         
         bucket = Bucket(name, percentage)
         self.buckets[name] = bucket
@@ -70,7 +55,7 @@ class BucketManager:
     
     def remove_bucket(self, name: str) -> bool:
         """
-        Remove a bucket from the manager, adding its percentage back to "free" bucket.
+        Remove a bucket from the manager.
         
         Args:
             name (str): Name of the bucket to remove
@@ -81,29 +66,8 @@ class BucketManager:
         if name not in self.buckets:
             return False
         
-        # Don't allow removing the "free" bucket
-        if name == "free":
-            return False
-        
-        # Get the percentage of the bucket being removed
-        removed_percentage = self.buckets[name].get_percentage()
-        
-        # Remove the bucket
+        # Remove the bucket (unallocated adjusts implicitly)
         del self.buckets[name]
-        
-        # Add the percentage back to "free" bucket
-        if "free" in self.buckets:
-            # If "free" bucket exists, add the removed percentage to it
-            current_free_percentage = self.buckets["free"].get_percentage()
-            new_free_percentage = current_free_percentage + removed_percentage
-            self.buckets["free"].resize_percentage(new_free_percentage)
-        else:
-            # If "free" bucket doesn't exist, create it with the removed percentage
-            # Calculate what percentage is needed to make it 100%
-            current_total = self.get_total_percentage()
-            needed_percentage = 100.0 - current_total
-            free_bucket = Bucket("free", needed_percentage)
-            self.buckets["free"] = free_bucket
         return True
     
     def get_bucket(self, name: str) -> Optional[Bucket]:
@@ -129,13 +93,13 @@ class BucketManager:
     
     def is_percentage_valid(self) -> bool:
         """
-        Check if the total percentage allocation equals 100%.
+        Check if the total percentage allocation does not exceed 100%.
         
         Returns:
-            bool: True if percentages add up to 100%, False otherwise
+            bool: True if total percentage ≤ 100% (within small epsilon), False otherwise
         """
         total = self.get_total_percentage()
-        return abs(total - 100.0) < 0.01  # Allow for small floating point errors
+        return total <= 100.0 + 0.01
     
     def get_percentage_difference(self) -> float:
         """
@@ -163,18 +127,8 @@ class BucketManager:
         old_percentage = self.buckets[name].get_percentage()
         total_without_bucket = self.get_total_percentage() - old_percentage
         
-        if total_without_bucket + new_percentage > 100.0:
-            # Try resizing the free bucket to 0 and try again
-            if "free" in self.buckets and self.buckets["free"].get_percentage() > 0:
-                free_old_pct = self.buckets["free"].get_percentage()
-                self.buckets["free"].resize_percentage(0.0)
-                total_without_bucket = self.get_total_percentage() - old_percentage
-                if total_without_bucket + new_percentage > 100.0:
-                    # Still not possible, revert free bucket and fail
-                    self.buckets["free"].resize_percentage(free_old_pct)
-                    return False
-            else:
-                return False
+        if total_without_bucket + new_percentage > 100.0 + 1e-6:
+            return False
         self.buckets[name].resize_percentage(new_percentage)
         return True
     
@@ -200,7 +154,7 @@ class BucketManager:
         """
         Add an amount (in dollars) to a bucket by resizing its percentage
         based on the change relative to the total budget. Keeps total at 100%
-        by adjusting the "free" bucket when possible.
+        while enforcing that total percentages do not exceed 100%.
         
         Args:
             name (str): Name of the bucket
@@ -225,26 +179,7 @@ class BucketManager:
         total_without_bucket = self.get_total_percentage() - old_pct
         proposed_total = total_without_bucket + new_pct
 
-        # If modifying the free bucket, only allow exact total of 100%
-        if name == "free":
-            if abs(proposed_total - 100.0) > 0.01:
-                return False
-            target_bucket.resize_percentage(new_pct)
-            return True
-
-        # Adjust free bucket to keep total at 100%
-        if "free" in self.buckets:
-            free_bucket = self.buckets["free"]
-            free_old = free_bucket.get_percentage()
-            delta_pct = new_pct - old_pct
-            free_new = free_old - delta_pct
-            if free_new < -0.01:
-                return False
-            target_bucket.resize_percentage(new_pct)
-            free_bucket.resize_percentage(max(free_new, 0.0))
-            return True
-
-        # No free bucket exists; enforce not exceeding 100%
+        # Enforce not exceeding 100% total
         if proposed_total > 100.0 + 1e-6:
             return False
         target_bucket.resize_percentage(new_pct)
