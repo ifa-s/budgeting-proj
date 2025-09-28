@@ -219,8 +219,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Built with ❤️ for VTHacks 13 in Blacksburg, VA
 
-**Team**: [Your team information here]
-**GitHub**: [ifa-s](https://github.com/ifa-s)
+**Team**: William (Bill) Campbell , Yashwanth (Yash) Kantheti, Hong Lin, Satwik Harapanahalli
+**GitHub**: [ifa-s](https://github.com/ifa-s) [yashkantheti] (https://github.com/YashKantheti) [sho026] (https://github.com/sho026) [SathwikH] (https://github.com/SathwikH)
 
 ---
 
