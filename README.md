@@ -57,10 +57,5 @@ Figure out django stuff -- uhh it's been a minute but lowkey not my problem
 Make API for the backend? Essentially translate bucketmanager aspects into easy commands for the ai, with output sent back to it
 A
 
-Task Assignment (unfinished)
-- BucketManager -- DONE MOSTLY
-- Bucket -- DONE MOSTLY
-- SQLite & Database work (15 minute low prio q) -- PROBABLY? TOMORROW Y'KNOW
-- AIManager -- MOSTLY DONE
-- API -- UHHHHH IDK DO WE NEED? USER_CLIENT MIGHT REPLACE THIS
-- Django frontend - yash n wizkid
+TODO LIST:
+Eventually make sqlite db and multiple chats work? --> post-hackathon
