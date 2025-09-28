@@ -1,4 +1,4 @@
-# Budget AI Assistant - Frontend Setup
+# Bucket! AI Assistant - Frontend Setup
 
 ## Overview
 This is a simple ChatGPT-like frontend interface that connects to your backend `user_client` for budget management. The interface provides a clean chat experience where users can interact with your AI budget assistant.
