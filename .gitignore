@@ -5,3 +5,28 @@ venv*
 *.pyc
 logs*
 *.pdf
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+__pycache__/
+*.py[cod]
+
+# Cloudflare tunnel credentials (NEVER COMMIT THESE)
+.cloudflared/
+*.json
+
+# Local scripts with sensitive info
+start_django.sh
+setup_tunnel.sh
+check_dns.sh
+*_SETUP.md
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

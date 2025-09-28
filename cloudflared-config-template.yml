@@ -1,0 +1,10 @@
+tunnel: YOUR_TUNNEL_ID_HERE
+credentials-file: /Users/yashk/.cloudflared/YOUR_TUNNEL_ID_HERE.json
+
+ingress:
+  - hostname: bucketfinance.us
+    service: http://localhost:8000
+  - hostname: www.bucketfinance.us
+    service: http://localhost:8000
+  # Catch-all rule (required)
+  - service: http_status:404
