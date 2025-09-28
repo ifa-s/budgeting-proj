@@ -694,6 +694,39 @@
             color: white;
             box-shadow: 0 8px 32px rgba(232, 119, 34, 0.3);
         }
+        
+        /* Formatting styles for message content */
+        .message-content strong {
+            font-weight: 600;
+        }
+        
+        .message.assistant .message-content strong {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+        
+        .message.user .message-content strong {
+            color: white;
+            font-weight: 700;
+        }
+        
+        .message-content em {
+            font-style: italic;
+        }
+        
+        .message-content code {
+            background-color: var(--bg-tertiary);
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875em;
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .message.user .message-content code {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
 
         .input-container {
             padding: 1rem 0 1rem 0;
@@ -1150,7 +1183,7 @@
                 console.log('=== MANUAL CHART DEBUG ===');
                 
                 // Fetch current status
-                fetch('/status/')
+                fetch('/chat/status/')
                     .then(response => response.json())
                     .then(data => {
                         console.log('Status response:', data);
@@ -1178,7 +1211,7 @@
             
             exportData() {
                 // Open export page in new tab
-                window.open('/export/', '_blank');
+                window.open('/chat/export/', '_blank');
             }
             
             initializeSidebar() {
@@ -1910,7 +1943,7 @@
                 if (this.hasStarted) return;
                 
                 try {
-                    const response = await fetch('/start/', {
+                    const response = await fetch('/chat/start/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1952,7 +1985,7 @@
                 this.setLoading(true);
                 
                 try {
-                    const response = await fetch('/send/', {
+                    const response = await fetch('/chat/send/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1985,6 +2018,34 @@
                 }
             }
             
+            // Process markdown-style formatting in text
+            processMarkdown(text) {
+                if (!text) return '';
+                
+                // Escape HTML first to prevent XSS
+                let processed = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+                
+                // Process markdown formatting
+                processed = processed
+                    // Bold text: **text** or __text__
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/__(.*?)__/g, '<strong>$1</strong>')
+                    // Italic text: *text* or _text_ (simpler approach)
+                    .replace(/\*([^*\s]+(?:\s+[^*\s]+)*)\*/g, '<em>$1</em>')
+                    .replace(/_([^_\s]+(?:\s+[^_\s]+)*)_/g, '<em>$1</em>')
+                    // Code: `text`
+                    .replace(/`([^`]+)`/g, '<code>$1</code>')
+                    // Line breaks
+                    .replace(/\n/g, '<br>');
+                
+                return processed;
+            }
+            
             addMessage(sender, content, type = 'normal') {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${sender}${type === 'system' ? ' system' : ''}`;
@@ -1995,7 +2056,13 @@
                 
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'message-content';
-                contentDiv.textContent = content;
+                
+                // Use innerHTML with processed markdown for AI responses, textContent for user messages
+                if (sender === 'assistant' || sender === 'AI') {
+                    contentDiv.innerHTML = this.processMarkdown(content);
+                } else {
+                    contentDiv.textContent = content;
+                }
                 
                 if (type === 'system') {
                     contentDiv.style.background = '#f3f4f6';

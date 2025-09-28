@@ -142,9 +142,9 @@ Please provide a comprehensive financial analysis in the following JSON format:
         "unusual_spending": "any unusual or concerning patterns",
         "positive_habits": "good financial habits observed"
     }},
-    "budgeting_recommendations": "Provide 3-5 specific budgeting recommendations in bullet point format. Each point should be actionable with specific dollar amounts or percentages. Format as: • Point 1\n• Point 2\n• Point 3",
-    "financial_insights": "Provide 3-5 key insights about spending behavior in bullet point format. Be specific and data-driven. Format as: • Insight 1\n• Insight 2\n• Insight 3",
-    "risk_assessment": "Assessment of financial risks, overspending patterns, or areas of concern. Include specific warnings if needed.",
+    "budgeting_recommendations": "Provide 3-5 specific budgeting recommendations in bullet point format. Each point should be actionable with specific dollar amounts or percentages. Use **bold** for important numbers or categories. Format as: • Point 1\n• Point 2\n• Point 3",
+    "financial_insights": "Provide 3-5 key insights about spending behavior in bullet point format. Be specific and data-driven. Use **bold** for key metrics and categories. Format as: • Insight 1\n• Insight 2\n• Insight 3",
+    "risk_assessment": "Provide 2-4 financial risk assessments in bullet point format. Focus on overspending patterns, concerning trends, or areas needing attention. Use **bold** for warning amounts or categories. Format as: • Risk 1\n• Risk 2\n• Risk 3",
     "college_student_specific_tips": "Advice tailored specifically for Virginia Tech students - consider dining plans, textbooks, campus activities, etc.",
     "action_items": [
         "Specific action item 1",
@@ -293,9 +293,9 @@ Please respond with a structured JSON format containing:
         "weekend_vs_weekday_spending": "analysis",
         "recurring_transactions": ["list of recurring items"]
     }},
-    "budgeting_recommendations": "Detailed recommendations for college students...",
-    "financial_insights": "Key insights about spending habits...",
-    "risk_assessment": "Assessment of financial health and risks...",
+    "budgeting_recommendations": "Provide 3-5 specific budgeting recommendations in bullet point format tailored for college students. Use **bold** for important amounts. Format as: • Recommendation 1\n• Recommendation 2",
+    "financial_insights": "Provide 3-5 key insights about spending behavior in bullet point format. Use **bold** for key metrics. Format as: • Insight 1\n• Insight 2",
+    "risk_assessment": "Provide 2-4 financial risk assessments in bullet point format. Use **bold** for warning amounts. Format as: • Risk 1\n• Risk 2",
     "college_student_tips": "Specific tips for college students...",
     "action_items": ["specific actionable steps"]
 }}

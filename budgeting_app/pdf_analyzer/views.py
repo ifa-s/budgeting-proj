@@ -441,20 +441,38 @@ def transaction_list(request, upload_id):
 def delete_upload(request, upload_id):
     """Delete an uploaded PDF and all associated data"""
     if request.method == 'POST':
-        pdf_upload = get_object_or_404(PDFUpload, id=upload_id)
-        
-        # Delete the file from storage
-        if pdf_upload.file:
-            try:
-                default_storage.delete(pdf_upload.file.name)
-            except:
-                pass  # File might not exist
-        
-        # Delete the database record (cascades to related objects)
-        file_name = pdf_upload.file_name
-        pdf_upload.delete()
-        
-        messages.success(request, f'Successfully deleted {file_name} and all associated data.')
-        return redirect('pdf_analyzer:index')
+        try:
+            pdf_upload = get_object_or_404(PDFUpload, id=upload_id)
+            file_name = pdf_upload.file_name
+            
+            logger.info(f"Deleting PDF upload: {file_name} (ID: {upload_id})")
+            
+            # Delete the file from storage
+            if pdf_upload.file:
+                try:
+                    default_storage.delete(pdf_upload.file.name)
+                    logger.info(f"Successfully deleted file from storage: {pdf_upload.file.name}")
+                except Exception as e:
+                    logger.warning(f"Could not delete file from storage: {e}")
+                    # Continue with database deletion even if file deletion fails
+            
+            # Delete the database record (cascades to related objects)
+            pdf_upload.delete()
+            logger.info(f"Successfully deleted database records for: {file_name}")
+            
+            # Check if this is an AJAX request
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'success': True, 'message': f'Successfully deleted {file_name}'})
+            else:
+                messages.success(request, f'Successfully deleted {file_name} and all associated data.')
+                return redirect('pdf_analyzer:index')
+                
+        except Exception as e:
+            logger.error(f"Error deleting upload {upload_id}: {str(e)}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': f'Failed to delete upload: {str(e)}'}, status=500)
+            else:
+                messages.error(request, f'Failed to delete upload: {str(e)}')
+                return redirect('pdf_analyzer:index')
     
     return JsonResponse({'error': 'Invalid request method'}, status=405)
