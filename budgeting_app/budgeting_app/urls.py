@@ -18,10 +18,17 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import render
+
+def landing_page(request):
+    """Landing page with AI chat and PDF analyzer options"""
+    return render(request, 'landing.html')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('chat.urls')),
+    path('landing/', landing_page, name='landing'),
+    path('chat/', include('chat.urls')),
+    path('', include('chat.urls')),  # Keep existing chat as default
     path('pdf-analyzer/', include('pdf_analyzer.urls')),
 ]
 

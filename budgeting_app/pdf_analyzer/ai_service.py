@@ -142,8 +142,8 @@ Please provide a comprehensive financial analysis in the following JSON format:
         "unusual_spending": "any unusual or concerning patterns",
         "positive_habits": "good financial habits observed"
     }},
-    "budgeting_recommendations": "Detailed budgeting advice specifically for college students, including specific dollar amounts and percentages where appropriate. Focus on practical, actionable advice.",
-    "financial_insights": "Key insights about spending behavior, trends, and areas for improvement. Be specific and data-driven.",
+    "budgeting_recommendations": "Provide 3-5 specific budgeting recommendations in bullet point format. Each point should be actionable with specific dollar amounts or percentages. Format as: • Point 1\n• Point 2\n• Point 3",
+    "financial_insights": "Provide 3-5 key insights about spending behavior in bullet point format. Be specific and data-driven. Format as: • Insight 1\n• Insight 2\n• Insight 3",
     "risk_assessment": "Assessment of financial risks, overspending patterns, or areas of concern. Include specific warnings if needed.",
     "college_student_specific_tips": "Advice tailored specifically for Virginia Tech students - consider dining plans, textbooks, campus activities, etc.",
     "action_items": [

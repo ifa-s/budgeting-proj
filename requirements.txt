@@ -1,5 +1,5 @@
 # Core dependencies for the budgeting project
-Django==5.2.6
+Django==4.2.24
 python-dotenv==1.0.1
 openai==1.109.1
 

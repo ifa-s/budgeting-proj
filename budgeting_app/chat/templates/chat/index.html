@@ -8,24 +8,24 @@
     <style>
         :root {
             /* Light theme colors */
-            --bg-primary: #f7f7f8;
-            --bg-secondary: #ffffff;
-            --bg-tertiary: #f9fafb;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
             --bg-quaternary: #f3f4f6;
-            --text-primary: #202123;
-            --text-secondary: #374151;
-            --text-tertiary: #6b7280;
-            --border-primary: #e5e5e5;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-tertiary: #718096;
+            --border-primary: rgba(134, 31, 65, 0.1);
             --border-secondary: #e5e7eb;
             --border-tertiary: #d1d5db;
-            --accent-primary: #10a37f;
-            --accent-hover: #0f8b6b;
-            --user-message: #10a37f;
-            --assistant-bg: #ffffff;
-            --loading-bg: #ffffff;
+            --accent-primary: #e87722;
+            --accent-hover: #d16617;
+            --user-message: #e87722;
+            --assistant-bg: #f8f9fa;
+            --loading-bg: #f8f9fa;
             --chart-grid: #f3f4f6;
             --success-bg: #f0fdf4;
-            --success-border: #10a37f;
+            --success-border: #e87722;
             --success-text: #059669;
             --error-bg: #fef2f2;
             --error-border: #fecaca;
@@ -34,24 +34,24 @@
 
         [data-theme="dark"] {
             /* Dark theme colors */
-            --bg-primary: #1a1a1a;
-            --bg-secondary: #2d2d2d;
-            --bg-tertiary: #383838;
-            --bg-quaternary: #404040;
-            --text-primary: #ffffff;
-            --text-secondary: #e5e5e5;
-            --text-tertiary: #a1a1aa;
-            --border-primary: #404040;
-            --border-secondary: #525252;
-            --border-tertiary: #404040;
-            --accent-primary: #10a37f;
-            --accent-hover: #0d8f70;
-            --user-message: #10a37f;
-            --assistant-bg: #2d2d2d;
-            --loading-bg: #2d2d2d;
-            --chart-grid: #404040;
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #4a5568;
+            --bg-quaternary: #718096;
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --text-tertiary: #cbd5e0;
+            --border-primary: rgba(232, 119, 34, 0.3);
+            --border-secondary: #4a5568;
+            --border-tertiary: #2d3748;
+            --accent-primary: #e87722;
+            --accent-hover: #fd9444;
+            --user-message: #e87722;
+            --assistant-bg: #2d3748;
+            --loading-bg: #2d3748;
+            --chart-grid: #4a5568;
             --success-bg: #0f2a1a;
-            --success-border: #10a37f;
+            --success-border: #e87722;
             --success-text: #4ade80;
             --error-bg: #2d1717;
             --error-border: #dc2626;
@@ -66,7 +66,14 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-            background: var(--bg-primary);
+            background: linear-gradient(135deg, 
+                rgba(232, 119, 34, 0.1) 0%, 
+                rgba(134, 31, 65, 0.05) 25%,
+                rgba(232, 119, 34, 0.08) 50%,
+                rgba(134, 31, 65, 0.03) 75%,
+                rgba(232, 119, 34, 0.06) 100%
+            );
+            background-attachment: fixed;
             color: var(--text-primary);
             height: 100vh;
             display: flex;
@@ -74,9 +81,27 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, 
+                rgba(26, 32, 44, 0.9) 0%, 
+                rgba(45, 55, 72, 0.8) 25%,
+                rgba(74, 85, 104, 0.7) 50%,
+                rgba(45, 55, 72, 0.8) 75%,
+                rgba(26, 32, 44, 0.9) 100%
+            ), 
+            linear-gradient(45deg, 
+                rgba(232, 119, 34, 0.05) 0%, 
+                rgba(134, 31, 65, 0.03) 100%
+            );
+            background-attachment: fixed;
+        }
+
         .header {
-            background: var(--bg-secondary);
-            border-bottom: 1px solid var(--border-primary);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(232, 119, 34, 0.3);
             padding: 1rem 2rem;
             display: flex;
             align-items: center;
@@ -84,6 +109,7 @@
             transition: all 0.3s ease;
             z-index: 100;
             position: relative;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         .header h1 {
@@ -646,11 +672,14 @@
         }
 
         .message-content {
-            background: var(--assistant-bg);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             padding: 1rem 1.25rem;
-            border-radius: 1rem;
+            border-radius: 1.2rem;
             max-width: 70%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             line-height: 1.5;
             white-space: pre-wrap;
             color: var(--text-secondary);
@@ -658,18 +687,26 @@
         }
 
         .message.user .message-content {
-            background: var(--user-message);
+            background: rgba(232, 119, 34, 0.8);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(232, 119, 34, 0.6);
             color: white;
+            box-shadow: 0 8px 32px rgba(232, 119, 34, 0.3);
         }
 
         .input-container {
             padding: 1rem 0 1rem 0;
-            background: var(--bg-secondary);
-            border-top: 1px solid var(--border-primary);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(232, 119, 34, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             transition: all 0.3s ease;
             flex-shrink: 0;
             position: sticky;
             bottom: 0;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
             z-index: 10;
         }
 
@@ -908,6 +945,9 @@
                 <div class="status-display" id="statusDisplay">
                     Ready to help with your budget
                 </div>
+                <a class="theme-toggle" id="homeButton" href="/landing/" title="Return to Home" style="margin-left: 0.5rem;">
+                    🏠
+                </a>
                 <button class="theme-toggle" id="themeToggle" title="Toggle dark/light theme">
                     🌙
                 </button>

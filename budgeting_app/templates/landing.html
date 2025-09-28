@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Budget AI Assistant - Smart Financial Management</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Light theme colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --maroon: #861f41;
+            --maroon-light: #a02856;
+            --maroon-dark: #6b1933;
+            --accent: #e87722;
+            --accent-light: #f39c4a;
+            --white: #ffffff;
+            --shadow: rgba(134, 31, 65, 0.15);
+            --border: rgba(134, 31, 65, 0.1);
+            --card-bg: #ffffff;
+            --gradient-bg: linear-gradient(135deg, var(--maroon) 0%, var(--maroon-light) 100%);
+        }
+
+        [data-theme="dark"] {
+            /* Dark theme colors */
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-tertiary: #4a5568;
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --text-muted: #a0aec0;
+            --maroon: #b83280;
+            --maroon-light: #d53f8c;
+            --maroon-dark: #97266d;
+            --accent: #f6ad55;
+            --accent-light: #fbb969;
+            --white: #2d3748;
+            --shadow: rgba(184, 50, 128, 0.2);
+            --border: rgba(184, 50, 128, 0.2);
+            --card-bg: #2d3748;
+            --gradient-bg: linear-gradient(135deg, var(--maroon-dark) 0%, var(--maroon) 100%);
+        }
+        
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, 
+                rgba(26, 32, 44, 0.9) 0%, 
+                rgba(45, 55, 72, 0.8) 25%,
+                rgba(74, 85, 104, 0.7) 50%,
+                rgba(45, 55, 72, 0.8) 75%,
+                rgba(26, 32, 44, 0.9) 100%
+            ), 
+            linear-gradient(45deg, 
+                rgba(184, 50, 128, 0.05) 0%, 
+                rgba(246, 173, 85, 0.03) 100%
+            );
+            background-attachment: fixed;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', sans-serif;
+            background: linear-gradient(135deg, 
+                rgba(134, 31, 65, 0.05) 0%, 
+                rgba(232, 119, 34, 0.08) 25%,
+                rgba(134, 31, 65, 0.03) 50%,
+                rgba(232, 119, 34, 0.06) 75%,
+                rgba(134, 31, 65, 0.05) 100%
+            );
+            background-attachment: fixed;
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        /* Header */
+                .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(134, 31, 65, 0.2);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] .header {
+            background: rgba(26, 32, 44, 0.95);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+        }
+
+        .logo i {
+            font-size: 2rem;
+        }
+
+        .theme-toggle {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--maroon);
+            transform: scale(1.1);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            background: var(--gradient-bg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="20" cy="20" r="1" fill="white" opacity="0.1"/><circle cx="80" cy="40" r="0.5" fill="white" opacity="0.1"/><circle cx="40" cy="80" r="0.8" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-text {
+            color: white;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .cta-button {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 1.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 8px 32px rgba(134, 31, 65, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(134, 31, 65, 0.2);
+            border-color: rgba(134, 31, 65, 0.4);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .cta-button i {
+            font-size: 2rem;
+            color: var(--maroon);
+        }
+
+        .cta-text h3 {
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .cta-text p {
+            color: white;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* Turkey Animation Container */
+        .turkey-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .turkey-animation {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Turkey SVG */
+        .turkey {
+            width: 100%;
+            height: 100%;
+            animation: wobble 4s ease-in-out infinite;
+        }
+
+        @keyframes wobble {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+
+        /* Money Animation */
+        .money {
+            position: absolute;
+            font-size: 1.5rem;
+            color: #22c55e;
+            animation: fall 2s linear infinite;
+        }
+
+        .money:nth-child(1) {
+            left: 20%;
+            animation-delay: 0s;
+        }
+
+        .money:nth-child(2) {
+            left: 50%;
+            animation-delay: 0.5s;
+        }
+
+        .money:nth-child(3) {
+            left: 80%;
+            animation-delay: 1s;
+        }
+
+        @keyframes fall {
+            0% {
+                top: -20px;
+                opacity: 1;
+                transform: rotate(0deg);
+            }
+            100% {
+                top: 320px;
+                opacity: 0;
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+            background: var(--bg-secondary);
+        }
+
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .features-title {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 3rem;
+            color: var(--text-primary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 8px 32px rgba(134, 31, 65, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 12px 40px rgba(134, 31, 65, 0.2);
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--maroon);
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .feature-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 2rem;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .nav-container {
+                padding: 0 1rem;
+            }
+
+            .features-container {
+                padding: 0 1rem;
+            }
+
+            .turkey-animation {
+                width: 200px;
+                height: 200px;
+            }
+        }
+
+        /* Loading Animation */
+        .fade-in {
+            animation: fadeIn 1s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <i class="fas fa-piggy-bank"></i>
+                Budget AI Assistant
+            </a>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon" id="themeIcon"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content fade-in">
+            <div class="hero-text">
+                <h1 class="hero-title">Smart Budgeting Made Simple</h1>
+                <p class="hero-subtitle">
+                    Take control of your finances with AI-powered insights. Chat with our intelligent assistant or upload your bank statements for personalized financial analysis.
+                </p>
+                
+                <div class="cta-buttons">
+                    <a href="/chat/" class="cta-button">
+                        <i class="fas fa-comments"></i>
+                        <div class="cta-text">
+                            <h3>Chat with AI Assistant</h3>
+                            <p>Get instant budgeting advice and financial guidance</p>
+                        </div>
+                    </a>
+                    
+                    <a href="/pdf-analyzer/" class="cta-button">
+                        <i class="fas fa-file-pdf"></i>
+                        <div class="cta-text">
+                            <h3>Analyze Bank Statement</h3>
+                            <p>Upload your PDF for detailed spending insights</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <div class="turkey-container">
+                <div class="turkey-animation">
+                    <!-- Cartoon Turkey SVG -->
+                    <svg class="turkey" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Turkey Body -->
+                        <ellipse cx="100" cy="120" rx="50" ry="40" fill="#8B4513" />
+                        
+                        <!-- Turkey Head -->
+                        <circle cx="100" cy="70" r="25" fill="#D2691E" />
+                        
+                        <!-- Turkey Beak -->
+                        <polygon points="85,75 70,80 85,85" fill="#FFA500" />
+                        
+                        <!-- Turkey Eyes -->
+                        <circle cx="90" cy="65" r="4" fill="white" />
+                        <circle cx="110" cy="65" r="4" fill="white" />
+                        <circle cx="90" cy="65" r="2" fill="black" />
+                        <circle cx="110" cy="65" r="2" fill="black" />
+                        
+                        <!-- Turkey Wattle -->
+                        <ellipse cx="100" cy="85" rx="8" ry="12" fill="#DC143C" />
+                        
+                        <!-- Turkey Feathers (Tail) -->
+                        <path d="M 60 100 Q 30 80 40 50 Q 60 70 80 90" fill="#8B0000" />
+                        <path d="M 70 95 Q 40 75 45 45 Q 65 65 85 85" fill="#DC143C" />
+                        <path d="M 80 90 Q 50 70 50 40 Q 70 60 90 80" fill="#FF6347" />
+                        <path d="M 120 90 Q 150 70 150 40 Q 130 60 110 80" fill="#FF6347" />
+                        <path d="M 130 95 Q 160 75 155 45 Q 135 65 115 85" fill="#DC143C" />
+                        <path d="M 140 100 Q 170 80 160 50 Q 140 70 120 90" fill="#8B0000" />
+                        
+                        <!-- Turkey Feet -->
+                        <polygon points="85,155 90,170 95,155" fill="#FFA500" />
+                        <polygon points="105,155 110,170 115,155" fill="#FFA500" />
+                    </svg>
+                    
+                    <!-- Falling Money -->
+                    <div class="money">💰</div>
+                    <div class="money">💵</div>
+                    <div class="money">🪙</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features">
+        <div class="features-container">
+            <h2 class="features-title">Why Choose Budget AI Assistant?</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <i class="feature-icon fas fa-brain"></i>
+                    <h3 class="feature-title">AI-Powered Insights</h3>
+                    <p class="feature-description">
+                        Get personalized financial advice powered by advanced AI technology that understands your spending patterns.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <i class="feature-icon fas fa-chart-line"></i>
+                    <h3 class="feature-title">Smart Analytics</h3>
+                    <p class="feature-description">
+                        Visualize your spending with detailed charts and graphs that make understanding your finances easy.
+                    </p>
+                </div>
+                
+                <div class="feature-card fade-in">
+                    <i class="feature-icon fas fa-shield-alt"></i>
+                    <h3 class="feature-title">Secure & Private</h3>
+                    <p class="feature-description">
+                        Your financial data is encrypted and secure. We prioritize your privacy and never share your information.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+        
+        // Load saved theme or default to light
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+        
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+        
+        function updateThemeIcon(theme) {
+            themeIcon.className = theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Smooth scrolling and animations
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add fade-in animation to elements as they come into view
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver(function(entries) {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationDelay = '0.1s';
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe feature cards
+            document.querySelectorAll('.feature-card').forEach(card => {
+                observer.observe(card);
+            });
+        });
+
+        // Add dynamic money dropping
+        setInterval(function() {
+            const turkeyContainer = document.querySelector('.turkey-container');
+            const money = document.createElement('div');
+            money.className = 'money';
+            money.textContent = ['💰', '💵', '🪙'][Math.floor(Math.random() * 3)];
+            money.style.left = Math.random() * 80 + 10 + '%';
+            money.style.animationDelay = '0s';
+            turkeyContainer.appendChild(money);
+            
+            setTimeout(() => {
+                if (money.parentNode) {
+                    money.parentNode.removeChild(money);
+                }
+            }, 2000);
+        }, 1000);
+    </script>
+</body>
+</html>

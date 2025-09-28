@@ -131,14 +131,22 @@ def upload_pdf(request):
             
             # Create category summaries from Gemini's analysis
             category_breakdown = analysis_result.get('category_breakdown', {})
+            total_expenses = float(analysis_result.get('summary_statistics', {}).get('total_expenses', 0))
+            
             for category_name, category_data in category_breakdown.items():
                 try:
+                    category_total = float(category_data.get('total', 0))
+                    # Calculate percentage if not provided or if it's 0
+                    percentage = category_data.get('percentage', 0)
+                    if percentage == 0 and total_expenses > 0 and category_total > 0:
+                        percentage = (category_total / total_expenses) * 100
+                    
                     CategorySummary.objects.create(
                         analysis=ai_analysis,
                         category_name=category_name,
-                        total_amount=Decimal(str(category_data.get('total', 0))),
+                        total_amount=Decimal(str(category_total)),
                         transaction_count=category_data.get('count', 0),
-                        percentage_of_expenses=Decimal(str(category_data.get('percentage', 0)))
+                        percentage_of_expenses=Decimal(str(round(percentage, 2)))
                     )
                 except Exception as cat_error:
                     logger.warning(f"Could not create category summary for {category_name}: {str(cat_error)}")
