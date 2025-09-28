@@ -26,9 +26,9 @@ def landing_page(request):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', landing_page, name='home'),  # Landing page as homepage
     path('landing/', landing_page, name='landing'),
     path('chat/', include('chat.urls')),
+    path('', include('chat.urls')),  # Keep existing chat as default
     path('pdf-analyzer/', include('pdf_analyzer.urls')),
 ]
 
