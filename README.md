@@ -221,7 +221,7 @@ Built with ❤️ for VTHacks 13 in Blacksburg, VA
 
 **Team**: William (Bill) Campbell, Yashwanth (Yash) Kantheti, Hong Lin, Satwik Harapanahalli
 
-**GitHub**: [ifa-s](https://github.com/ifa-s) [yashkantheti] (https://github.com/YashKantheti) [sho026] (https://github.com/sho026) [SathwikH] (https://github.com/SathwikH)
+**GitHub**: [ifa-s](https://github.com/ifa-s) [yashkantheti](https://github.com/YashKantheti) [sho026](https://github.com/sho026) [SathwikH](https://github.com/SathwikH)
 
 ---
 
